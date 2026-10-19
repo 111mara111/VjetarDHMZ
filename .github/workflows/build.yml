@@ -1,0 +1,40 @@
+name: Build iOS
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen
+
+      - name: Build for simulator (compile check)
+        run: |
+          xcodebuild -project VjetarDHMZ.xcodeproj -scheme VjetarDHMZ \
+            -sdk iphonesimulator -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build
+
+      - name: Build unsigned device app
+        run: |
+          xcodebuild -project VjetarDHMZ.xcodeproj -scheme VjetarDHMZ \
+            -sdk iphoneos -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/VjetarDHMZ.app Payload/
+          zip -qr VjetarDHMZ-unsigned.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VjetarDHMZ-unsigned-ipa
+          path: VjetarDHMZ-unsigned.ipa
