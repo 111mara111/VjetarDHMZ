@@ -1,6 +1,32 @@
 {
-  "generatedAt": null,
+  "generatedAt": "2026-10-28T15:42:51Z",
   "source": "DHMZ ALADIN/HR",
   "maxModelAgeHours": 10,
-  "regions": {}
+  "regions": {
+    "MASL": {
+      "status": "current",
+      "modelUtc": "2026-10-28T13:00:00Z",
+      "checkedAt": "2026-10-28T15:42:51Z"
+    },
+    "SENJ": {
+      "status": "current",
+      "modelUtc": "2026-10-28T13:00:00Z",
+      "checkedAt": "2026-10-28T15:42:51Z"
+    },
+    "SPLI": {
+      "status": "current",
+      "modelUtc": "2026-10-28T13:00:00Z",
+      "checkedAt": "2026-10-28T15:42:51Z"
+    },
+    "DUBR": {
+      "status": "current",
+      "modelUtc": "2026-10-28T13:00:00Z",
+      "checkedAt": "2026-10-28T15:42:51Z"
+    },
+    "HRv8": {
+      "status": "current",
+      "modelUtc": "2026-10-28T13:00:00Z",
+      "checkedAt": "2026-10-28T15:42:51Z"
+    }
+  }
 }
