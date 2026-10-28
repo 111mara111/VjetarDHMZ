@@ -9,7 +9,7 @@ on:
       - 'scripts/update_radar.py'
       - '.github/workflows/adriatic-web.yml'
   schedule:
-    - cron: '13,43 * * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 permissions:
   contents: read

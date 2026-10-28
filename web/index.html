@@ -45,7 +45,7 @@ dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius
 <section id="pomorci" class="view panel hidden"><h2>Prognoza za pomorce (NAVTEX)</h2><div class="forecast-stamp" id="stamp-pomorci"></div><div class="forecast-text" id="text-pomorci">Učitavam aktualno izvješće…</div><a class="external" href="https://meteo.hr/prognoze.php?param=pomorci&amp;section=prognoze_specp" target="_blank" rel="noopener">Otvori na DHMZ-u</a></section>
 <section id="radar" class="view panel hidden"><h2>Radar oborina</h2><div class="forecast-stamp">DHMZ · radarska slika i animacija</div><div id="radar-container">
 <div class="radar-tools"><button id="radar-play" aria-pressed="true">Ⅱ Animacija</button><button id="radar-static" aria-pressed="false">Trenutno</button><button id="radar-zoom">Povećaj ＋</button><button id="radar-fit">Cijela slika</button><button id="radar-refresh">↻ Osvježi</button></div>
-<div class="radar-viewport" id="radar-viewport"><img id="radar-image" alt="DHMZ radarski kompozit oborine, s vremenskom oznakom na karti" class="hidden"><div id="radar-placeholder" class="radar-warning">Otvorite radar za učitavanje najnovije animacije.</div></div>
+<div class="radar-viewport" id="radar-viewport"><img id="radar-image" alt="DHMZ radarski kompozit oborine, s vremenskom oznakom na karti" class="hidden"><div id="radar-placeholder" class="radar-warning">DHMZ radarska animacija učitava se automatski.</div></div>
 <div id="radar-info" class="radar-status">Vrijeme mjerenja označeno je na samoj DHMZ slici.</div>
 </div><a class="external" href="https://meteo.hr/naslovnica_radarska-slika.php?tab=radari" target="_blank" rel="noopener">Otvori službeni DHMZ radar</a></section>
 <section id="douglas" class="view panel hidden"><h2>Douglasova skala</h2><p class="forecast-stamp">Opis stanja mora i visina valova — referentna skala, ne trenutačno mjerenje.</p><table class="douglas"><thead><tr><th>Stanje</th><th>Opis</th><th>Valovi (m)</th></tr></thead><tbody>
@@ -61,7 +61,7 @@ dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius
 <tr><td>9</td><td>Izuzetno teško</td><td>više od 14</td></tr>
 </tbody></table><a class="external" href="https://meteo.hr/prognoze.php?param=jadran&amp;section=prognoze_specp" target="_blank" rel="noopener">Izvor: DHMZ</a></section>
 <dialog id="install-dialog"><h2>Dodaj na iPhone ili iPad</h2><p>Otvori stranicu u Safariju, pritisni <strong>Share</strong>, zatim <strong>Add to Home Screen</strong> i <strong>Add</strong>.</p><button id="close-dialog">Zatvori</button></dialog>
-<footer>Izvor: <a href="https://www.meteo.hr/infrastruktura.php?param=aladin&amp;section=prognosticki_modeli">DHMZ ALADIN/HR</a>. Svaki ulazak traži novi podatak; stariji modeli nisu dopušteni. Vrijeme početka modela različito je od vremena kada je provjeren. Model je prognoza, a ne trenutačno mjerenje.</footer></main>
+<footer>Izvor: <a href="https://www.meteo.hr/infrastruktura.php?param=aladin&amp;section=prognosticki_modeli">DHMZ ALADIN/HR</a>. Vjetar ponovno dohvaća karte samo kada je objavljen novi prognostički model. Vrijeme početka modela različito je od vremena kada je provjeren. Model je prognoza, a ne trenutačno mjerenje.</footer></main>
 <script>
 (function(){
 "use strict";
@@ -207,37 +207,72 @@ function radarApply(){radarImg.style.transform="translate3d("+radarX+"px,"+radar
 function radarZoomTo(s){radarZoom=Math.min(5,Math.max(1,s));if(radarZoom===1){radarX=0;radarY=0}radarApply()}
 function radarButtons(){g("radar-play").setAttribute("aria-pressed",String(radarMode==="animation"));g("radar-static").setAttribute("aria-pressed",String(radarMode==="static"))}
 async function radarLoad(force){
- if(!force&&radarImg.src&&Date.now()-radarLastRequest<5*60000)return;
- const seq=++radarRequestId;
- radarLastRequest=Date.now();
- radarPlaceholder.textContent="Provjeravam vrijeme posljednje DHMZ radarske snimke…";
- radarPlaceholder.classList.remove("hidden");
- radarImg.classList.add("hidden");
- try{
-  const ac=new AbortController(),timeout=setTimeout(()=>ac.abort(),10000);
-  let metadata;
-  try{
-   const res=await fetch("./data/radar.json?check="+Date.now(),{cache:"no-store",signal:ac.signal});
-   if(!res.ok)throw Error("Provjera radara nije dostupna");
-   metadata=await res.json();
-  }finally{clearTimeout(timeout)}
-  if(seq!==radarRequestId)return;
-  const age=Date.now()-Date.parse(metadata.measuredUtc||"");
-  const verificationAge=Date.now()-Date.parse(metadata.checkedAt||"");
-  if(metadata.status!=="current"||!Number.isFinite(age)||age< -300000||age>35*60000||!Number.isFinite(verificationAge)||verificationAge>35*60000||verificationAge< -300000){
-   throw Error("Nema potvrđene svježe radarske snimke");
+  const now=Date.now();
+  if(!force && !radarImg.classList.contains("hidden") && now-radarLastRequest<5*60000)return;
+  const seq=++radarRequestId, mode=radarMode;
+  radarLastRequest=now;
+  const hasImage=!radarImg.classList.contains("hidden") && Boolean(radarImg.src);
+  if(!hasImage){
+    radarPlaceholder.textContent="Učitavam DHMZ radarsku "+(mode==="animation"?"animaciju…":"sliku…");
+    radarPlaceholder.classList.remove("hidden");
   }
-  const path=radarMode==="animation"?"anim_kompozit.gif":"kompozit-stat.png";
-  const imageURL=radarMode==="static"?"./data/radar-latest.png?measurement="+encodeURIComponent(metadata.measuredUtc):"https://vrijeme.hr/anim_kompozit.gif?fresh="+Math.floor(Date.now()/300000);
-  const next=new Image();const timer=setTimeout(()=>{next.onload=null;next.onerror=null;radarPlaceholder.textContent="Radar ne odgovara.";},12000);
-  next.onload=()=>{clearTimeout(timer);if(seq!==radarRequestId)return;radarImg.src=next.src;radarImg.classList.remove("hidden");radarPlaceholder.classList.add("hidden");g("radar-info").textContent="DHMZ · mjerenje "+fmt.format(new Date(metadata.measuredUtc))+" · "+(radarMode==="animation"?"animacija":"zadnja slika");};
-  next.onerror=()=>{clearTimeout(timer);if(seq!==radarRequestId)return;radarPlaceholder.textContent="Radarska datoteka nije dostupna. Otvori DHMZ poveznicom ispod.";};
-  next.src=imageURL;
- }catch(error){
+  g("radar-info").textContent="DHMZ · učitavanje najnovije radarske snimke";
+  // Do not block display on the latest GitHub Actions timestamp. Scheduled
+  // verification may run late while the original DHMZ GIF is already current.
+  const sources=mode==="animation"?
+    ["https://vrijeme.hr/anim_kompozit.gif?fresh="+now, "./data/radar-animation.gif?fresh="+now]:
+    ["./data/radar-latest.png?fresh="+now];
+  let loaded=false, usedSource="";
+  for(const url of sources){
+    if(seq!==radarRequestId)return;
+    try{
+      const image=await new Promise((resolve,reject)=>{
+        const candidate=new Image();
+        const timer=setTimeout(()=>{candidate.onload=null;candidate.onerror=null;reject(new Error("Timeout"))},11000);
+        candidate.onload=()=>{clearTimeout(timer);resolve(candidate)};
+        candidate.onerror=()=>{clearTimeout(timer);reject(new Error("Image error"))};
+        candidate.src=url;
+      });
+      if(seq!==radarRequestId)return;
+      radarImg.src=image.src;
+      radarImg.classList.remove("hidden");
+      radarPlaceholder.classList.add("hidden");
+      usedSource=url.includes("vrijeme.hr")?"DHMZ izravno":"provjerena radarska kopija";
+      loaded=true;
+      break;
+    }catch{ /* If direct GIF fails on Safari, use the latest hosted copy. */ }
+  }
   if(seq!==radarRequestId)return;
-  radarPlaceholder.textContent=error.message+". Otvori DHMZ poveznicom ispod.";
-  g("radar-info").textContent="Radar nije prikazan jer njegova aktualnost nije potvrđena.";
- }
+  if(!loaded){
+    if(!hasImage){
+      radarImg.classList.add("hidden");
+      radarPlaceholder.textContent="DHMZ radarska animacija trenutačno nije dostupna. Pokušaj Osvježi.";
+      radarPlaceholder.classList.remove("hidden");
+    }
+    g("radar-info").textContent="Radarski izvor nije odgovorio · prikaz se ne označava aktualnim";
+    return;
+  }
+  g("radar-info").textContent="DHMZ · "+usedSource+" · vrijeme snimke nalazi se na samoj karti";
+  // Metadata is additional provenance, not an availability gate.
+  try{
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),4500);
+    let res;
+    try{res=await fetch("./data/radar.json?check="+Date.now(),{cache:"no-store",signal:controller.signal})}
+    finally{clearTimeout(timer)}
+    if(!res.ok)throw Error("HTTP");
+    const metadata=await res.json();
+    if(seq!==radarRequestId)return;
+    const measurement=Date.parse(metadata.measuredUtc||"");
+    const age=Date.now()-measurement;
+    if(metadata.status==="current"&&Number.isFinite(age)&&age>=-5*60000&&age<=35*60000){
+      g("radar-info").textContent="DHMZ · mjerenje potvrđeno "+fmt.format(new Date(measurement))+" · "+(mode==="animation"?"animacija":"zadnji kadar");
+    }else{
+      g("radar-info").textContent="DHMZ · "+usedSource+" · vrijeme snimke pročitaj na karti (automatska provjera vremena još nije ažurirana)";
+    }
+  }catch{
+    if(seq===radarRequestId)g("radar-info").textContent="DHMZ · "+usedSource+" · vrijeme snimke pročitaj na karti";
+  }
 }
 g("radar-play").onclick=()=>{radarMode="animation";radarButtons();radarLoad(true)};
 g("radar-static").onclick=()=>{radarMode="static";radarButtons();radarLoad(true)};
