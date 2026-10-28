@@ -21,7 +21,15 @@ footer{font-size:12px;color:var(--muted);margin:15px 4px;line-height:1.6}footer 
 .map{touch-action:none;overflow:hidden;user-select:none;-webkit-user-select:none}.map img{pointer-events:none;will-change:transform;transform-origin:center center;touch-action:none}
 .days{display:flex;gap:7px;margin:12px 0 6px}.days button{flex:1;font-size:12px;padding:9px 4px}.days button[aria-pressed=true]{background:var(--soft);color:var(--accent);border-color:var(--accent)}
 .view.panel{padding:14px 16px;margin-top:12px}.view.panel h2{font-size:19px;margin:3px 0 12px}.forecast-text{white-space:pre-line;line-height:1.65;font-size:15px}.forecast-stamp{font-size:12px;color:var(--muted);margin:10px 0}.external{display:inline-block;margin:14px 0 8px;font-weight:650;font-size:14px}
-#radar-container iframe{border:1px solid var(--border);border-radius:12px;display:block;width:100%;height:65vh;min-height:370px;background:#fff}.douglas{border-collapse:collapse;width:100%;font-size:13px}.douglas th,.douglas td{border-bottom:1px solid var(--border);padding:10px 6px;text-align:left}.douglas th{color:var(--muted)}.douglas td:first-child{font-weight:750}
+
+.radar-tools{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:11px}
+.radar-tools button{flex:1;min-width:94px;padding:10px 8px;font-size:12px}
+.radar-tools button[aria-pressed=true]{background:var(--soft);color:var(--accent);border-color:var(--accent)}
+.radar-viewport{height:min(65vh,660px);min-height:350px;border-radius:12px;border:1px solid var(--border);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;background:#f3f5f7;touch-action:none;user-select:none;-webkit-user-select:none}
+.radar-viewport img{max-width:100%;max-height:100%;object-fit:contain;display:block;transform-origin:center center;will-change:transform;pointer-events:none}
+.radar-status{font-size:12px;color:var(--muted);margin:12px 0}
+.radar-warning{padding:9px 11px;background:var(--soft);color:var(--text);border-radius:10px;font-size:12px}
+.douglas{border-collapse:collapse;width:100%;font-size:13px}.douglas th,.douglas td{border-bottom:1px solid var(--border);padding:10px 6px;text-align:left}.douglas th{color:var(--muted)}.douglas td:first-child{font-weight:750}
 dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius:16px;color:var(--text);background:var(--box);padding:20px}dialog::backdrop{background:#0009}
 @media(max-width:450px){.main-nav button{font-size:12px;padding:9px 7px}.maptools{width:100%}.maptools button{flex:1}.days button{font-size:11px}}
 </style></head><body><main><header class="masthead"><div><small class="subtitle">DHMZ · ALADIN/HR</small><h1>Vjetar Jadran</h1></div><button id="install" type="button">Dodaj na iPhone ＋</button></header><nav class="main-nav" aria-label="Dijelovi aplikacije">
@@ -35,7 +43,11 @@ dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius
 <div class="controls"><div class="time"><strong id="hour">+0 h</strong><span id="date">Čekam podatke…</span></div><input id="slider" type="range" min="0" max="72" step="1" value="0" disabled aria-label="Sat prognoze"><div class="days"><button data-h="0">1. dan</button><button data-h="24">2. dan</button><button data-h="48">3. dan</button><button data-h="72">+72 h</button></div><div class="quick" id="quick"><button data-h="0">+0 h</button><button data-h="12">+12 h</button><button data-h="24">+24 h</button><button data-h="36">+36 h</button><button data-h="48">+48 h</button><button data-h="60">+60 h</button><button data-h="72">+72 h</button></div><div class="actions"><button id="play" class="primary" disabled>▶ Pokreni</button><button id="prev" disabled>− 1 h</button><button id="next" disabled>+ 1 h</button></div></div></section></div>
 <section id="nauticari" class="view panel hidden"><h2>Prognoza za Jadran za nautičare</h2><div class="forecast-stamp" id="stamp-nauticari"></div><div class="forecast-text" id="text-nauticari">Učitavam aktualno izvješće…</div><a class="external" href="https://meteo.hr/prognoze.php?param=jadran&amp;section=prognoze_specp" target="_blank" rel="noopener">Otvori na DHMZ-u</a></section>
 <section id="pomorci" class="view panel hidden"><h2>Prognoza za pomorce (NAVTEX)</h2><div class="forecast-stamp" id="stamp-pomorci"></div><div class="forecast-text" id="text-pomorci">Učitavam aktualno izvješće…</div><a class="external" href="https://meteo.hr/prognoze.php?param=pomorci&amp;section=prognoze_specp" target="_blank" rel="noopener">Otvori na DHMZ-u</a></section>
-<section id="radar" class="view panel hidden"><h2>Radar oborina</h2><div class="forecast-stamp">DHMZ · radarska slika i animacija</div><div id="radar-container"></div><p class="forecast-stamp">Ako preglednik blokira ugradnju DHMZ radara, koristi poveznicu.</p><a class="external" href="https://meteo.hr/naslovnica_radarska-slika.php?tab=radari" target="_blank" rel="noopener">Otvori službeni DHMZ radar</a></section>
+<section id="radar" class="view panel hidden"><h2>Radar oborina</h2><div class="forecast-stamp">DHMZ · radarska slika i animacija</div><div id="radar-container">
+<div class="radar-tools"><button id="radar-play" aria-pressed="true">Ⅱ Animacija</button><button id="radar-static" aria-pressed="false">Trenutno</button><button id="radar-zoom">Povećaj ＋</button><button id="radar-fit">Cijela slika</button><button id="radar-refresh">↻ Osvježi</button></div>
+<div class="radar-viewport" id="radar-viewport"><img id="radar-image" alt="DHMZ radarski kompozit oborine, s vremenskom oznakom na karti" class="hidden"><div id="radar-placeholder" class="radar-warning">Otvorite radar za učitavanje najnovije animacije.</div></div>
+<div id="radar-info" class="radar-status">Vrijeme mjerenja označeno je na samoj DHMZ slici.</div>
+</div><a class="external" href="https://meteo.hr/naslovnica_radarska-slika.php?tab=radari" target="_blank" rel="noopener">Otvori službeni DHMZ radar</a></section>
 <section id="douglas" class="view panel hidden"><h2>Douglasova skala</h2><p class="forecast-stamp">Opis stanja mora i visina valova — referentna skala, ne trenutačno mjerenje.</p><table class="douglas"><thead><tr><th>Stanje</th><th>Opis</th><th>Valovi (m)</th></tr></thead><tbody>
 <tr><td>0</td><td>Mirno, poput zrcala</td><td>0</td></tr>
 <tr><td>1</td><td>Mirno, naborano</td><td>0–0,1</td></tr>
@@ -56,7 +68,7 @@ dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius
 const regs=[["MASL","Zadar"],["SENJ","Istra + Kvarner"],["SPLI","Split"],["DUBR","Dubrovnik"],["HRv8","Hrvatska"]];
 const g=id=>document.getElementById(id),img=g("image"),sl=g("slider"),tabs=g("tabs");
 const fmt=new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
-let data=null,selected="MASL",display="",hour=0,token="",pending=0,tick=null,busy=false,cache=new Map(),lastFetch=0;
+let data=null,selected="MASL",display="",hour=0,pending=0,tick=null,busy=false,cache=new Map(),lastFetch=0,refreshSequence=0;
 regs.forEach(r=>{let b=document.createElement("button");b.textContent=r[1];b.dataset.r=r[0];b.onclick=()=>{selected=r[0];tabsDraw();draw()};tabs.append(b)});
 function tabsDraw(){Array.from(tabs.children).forEach(b=>b.setAttribute("aria-selected",String(b.dataset.r===selected)))}
 function stop(){if(tick)clearInterval(tick);tick=null;g("play").textContent="▶ Pokreni"}
@@ -67,9 +79,9 @@ function verified(key){
  let age=Date.now()-Date.parse(m.modelUtc),checked=Date.now()-Date.parse(m.checkedAt);
  return age>=-3600000&&age<=28800000&&checked>=-300000&&checked<=14400000?m:null;
 }
-function src(reg,h){return "https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?fresh="+token}
+function src(reg,h){const model=verified(reg)?.modelUtc;if(!model)throw Error("Model nije potvrđen");return "https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?model="+encodeURIComponent(model)}
 function preload(reg,h){
- let k=reg+"_"+h;if(cache.has(k))return cache.get(k);
+ let k=src(reg,h);if(cache.has(k))return cache.get(k);
  let p=new Promise((resolve,reject)=>{const i=new Image();let timeout=setTimeout(()=>reject(Error("DHMZ ne odgovara")),14000);i.onload=()=>{clearTimeout(timeout);resolve(i)};i.onerror=()=>{clearTimeout(timeout);reject(Error("Karta nije dostupna"))};i.src=src(reg,h)});
  cache.set(k,p);p.catch(()=>{if(cache.get(k)===p)cache.delete(k)});if(cache.size>12)cache.delete(cache.keys().next().value);return p;
 }
@@ -83,21 +95,58 @@ async function show(h){
  finally{if(seq===pending){busy=false;g("loading").classList.add("hidden")}}
 }
 function draw(){
- stop();pending++;busy=false;cache.clear();token=String(Date.now())+"_"+Math.random().toString(36).slice(2);g("warning").classList.add("hidden");zoomTo(1);blank("Učitavam svježu kartu…");
+ stop();pending++;busy=false;g("warning").classList.add("hidden");zoomTo(1);blank("Učitavam provjerenu kartu…");
  let actual=selected,m=verified(actual);
  if(!m&&selected!=="HRv8"&&verified("HRv8")){actual="HRv8";m=verified(actual);g("warning").textContent="DHMZ nema svježu regionalnu kartu za "+regs.find(x=>x[0]===selected)[1]+". Prikazana je aktualna karta cijele Hrvatske.";g("warning").classList.remove("hidden")}
  if(!m){display="";g("status").textContent="Svježa prognoza nije dostupna";g("meta").textContent="Bez starih podataka";blank("Trenutačno nema provjerene nove DHMZ karte. Stare karte ne prikazujem.");return}
  display=actual;g("status").textContent="Aktualni model · "+regs.find(x=>x[0]===actual)[1];g("meta").textContent="Model "+fmt.format(new Date(m.modelUtc))+" · provjera "+fmt.format(new Date(m.checkedAt));controls(true);show(Math.min(72,Math.max(0,Math.round((Date.now()-Date.parse(m.modelUtc))/3600000))));
 }
 async function refresh(){
- stop();pending++;display="";data=null;cache.clear();lastFetch=Date.now();g("loading").classList.add("hidden");g("warning").classList.add("hidden");blank("Provjeravam najnoviji model s izvora…");g("status").textContent="Provjeravam novu DHMZ prognozu…";g("meta").textContent="Bez prikaza prethodne karte";g("refresh").disabled=true;
- const ac=new AbortController(),timeout=setTimeout(()=>ac.abort(),12000);
- try{let r=await fetch("./data/manifest.json?check="+Date.now(),{cache:"no-store",signal:ac.signal});if(!r.ok)throw Error("Status "+r.status);let m=await r.json();if(!m.generatedAt||!m.regions)throw Error("Provjera nije potpuna");data=m;draw()}
- catch(e){g("status").textContent="Novi podaci nisu potvrđeni";g("meta").textContent="Pokušaj ponovno";blank("Provjera nove prognoze nije uspjela. Ne prikazujem staru kartu.")}
- finally{clearTimeout(timeout);g("refresh").disabled=false}
+  const call=++refreshSequence;
+  lastFetch=Date.now();
+  g("refresh").disabled=true;
+  if(!display){g("status").textContent="Provjeravam posljednji DHMZ model…";noNewForecastYet();}
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
+  try{
+    const response=await fetch("./data/manifest.json?check="+Date.now(),{cache:"no-store",signal:controller.signal});
+    if(!response.ok)throw Error("Provjera nije dostupna");
+    const next=await response.json();
+    if(!next.generatedAt||!next.regions)throw Error("Nedostaju podaci o modelu");
+    if(call!==refreshSequence)return;
+    const prevModel=display?verified(display)?.modelUtc:null;
+    data=next;
+    const current=display?verified(display):null;
+    notifyCacheModels();
+    if(display&&current&&prevModel===current.modelUtc&&!img.classList.contains("hidden")){
+      g("status").textContent="Model se nije promijenio · koristim učitane karte";
+      g("meta").textContent="Model "+fmt.format(new Date(current.modelUtc))+" · provjera "+fmt.format(new Date(current.checkedAt));
+      return;
+    }
+    // A different or expired model must never reuse the old frame.
+    if(prevModel!==current?.modelUtc)cache.clear();
+    draw();
+  }catch(error){
+    if(call!==refreshSequence)return;
+    if(display&&verified(display)&&!img.classList.contains("hidden")){
+      g("status").textContent="Nema potvrde novog modela · zadržavam posljednju važeću kartu";
+      // Retain only a still-fresh model verified by a previous successful check.
+    }else{
+      stop();pending++;display="";data=null;cache.clear();
+      g("status").textContent="Nije moguće potvrditi aktualnost prognoze";
+      g("meta").textContent="Provjera nije dostupna";
+      blank("Svježi prognostički podaci nisu potvrđeni. Stari model nije prikazan.");
+    }
+  }finally{clearTimeout(timeout);if(call===refreshSequence)g("refresh").disabled=false}
 }
+function noNewForecastYet(){g("meta").textContent="Provjeravam samo metapodatke";blank("Provjera DHMZ modela…")}
+function notifyCacheModels(){
+  if(!navigator.serviceWorker?.controller)return;
+  const allowed=Object.values(data?.regions||{}).filter(x=>x.status==="current"&&x.modelUtc).map(x=>x.modelUtc);
+  navigator.serviceWorker.controller.postMessage({type:"KEEP_MODELS",models:allowed});
+}
+
 g("refresh").onclick=refresh;let sliderTimer=null;sl.oninput=()=>{g('hour').textContent='+'+sl.value+' h';clearTimeout(sliderTimer);sliderTimer=setTimeout(()=>{stop();show(sl.value)},110)};g("prev").onclick=()=>{stop();show(hour-1)};g("next").onclick=()=>{stop();show(hour+1)};
-document.querySelectorAll("#quick button").forEach(b=>b.onclick=()=>show(b.dataset.h));
+document.querySelectorAll("#quick button").forEach(b=>b.onclick=()=>{stop();show(b.dataset.h)});
 g("play").onclick=()=>{if(tick){stop();return}if(!display)return;g("play").textContent="Ⅱ Pauza";tick=setInterval(()=>{if(!busy&&hour<72)show(hour+1);else if(hour>=72)stop()},900)};
 document.addEventListener("visibilitychange",()=>{if(document.hidden)stop()});
 window.addEventListener("pageshow",e=>{if(e.persisted&&Date.now()-lastFetch>60000)refresh()});tabsDraw();refresh();
@@ -109,7 +158,7 @@ function chooseSection(section){
  document.querySelectorAll(".main-nav button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.section===section)));
  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("hidden",v.id!==section));
  if(section==="nauticari"||section==="pomorci")loadForecast(section);
- if(section==="radar"&&!g("radar-container").firstChild){const frame=document.createElement("iframe");frame.title="DHMZ radar oborina";frame.loading="lazy";frame.src="https://meteo.hr/naslovnica_radarska-slika.php?tab=radari";g("radar-container").append(frame)}
+ if(section==="radar")radarLoad(false);
  if(section==="wind"&&Date.now()-lastFetch>60000)refresh();
 }
 async function loadForecast(section){
@@ -139,6 +188,44 @@ g("install").onclick=()=>g("install-dialog").showModal();
 g("close-dialog").onclick=()=>g("install-dialog").close();
 document.querySelectorAll(".main-nav button").forEach(b=>b.onclick=()=>chooseSection(b.dataset.section));
 document.querySelectorAll(".days button").forEach(b=>b.onclick=()=>{stop();show(Number(b.dataset.h))});
-document.addEventListener("visibilitychange",()=>{if(!document.hidden){activeData=null;if(activeSection==="wind")refresh();else if(activeSection==="nauticari"||activeSection==="pomorci")loadForecast(activeSection)}});
+
+let radarMode="animation",radarLastRequest=0,radarZoom=1,radarX=0,radarY=0,radarPointers=new Map(),radarPinch=null;
+const radarImg=g("radar-image"),radarView=g("radar-viewport"),radarPlaceholder=g("radar-placeholder");
+function radarApply(){radarImg.style.transform="translate3d("+radarX+"px,"+radarY+"px,0) scale("+radarZoom+")"}
+function radarZoomTo(s){radarZoom=Math.min(5,Math.max(1,s));if(radarZoom===1){radarX=0;radarY=0}radarApply()}
+function radarButtons(){g("radar-play").setAttribute("aria-pressed",String(radarMode==="animation"));g("radar-static").setAttribute("aria-pressed",String(radarMode==="static"))}
+function radarLoad(force){
+ if(!force&&radarImg.src&&Date.now()-radarLastRequest<5*60000)return;
+ radarLastRequest=Date.now();
+ const path=radarMode==="animation"?"anim_kompozit.gif":"kompozit-stat.png";
+ const url="https://vrijeme.hr/"+path+"?fresh="+Math.floor(radarLastRequest/300000);
+ radarPlaceholder.textContent="Učitavam DHMZ "+(radarMode==="animation"?"radarsku animaciju…":"radarsku kartu…");
+ radarPlaceholder.classList.remove("hidden");
+ radarImg.classList.add("hidden");
+ const next=new Image();
+ next.onload=()=>{if(activeSection!=="radar"||radarMode!==(path.startsWith("anim")?"animation":"static"))return;radarImg.src=next.src;radarImg.classList.remove("hidden");radarPlaceholder.classList.add("hidden");g("radar-info").textContent="DHMZ kompozit · "+(radarMode==="animation"?"animacija":"posljednji snimak")+" · vrijeme mjerenja prikazano na karti";};
+ next.onerror=()=>{radarPlaceholder.textContent="DHMZ radarska datoteka nije dostupna. Koristite poveznicu na službeni radar ispod.";g("radar-info").textContent="Ne mogu potvrditi dostupnost radara.";};
+ next.src=url;
+}
+g("radar-play").onclick=()=>{radarMode="animation";radarButtons();radarLoad(true)};
+g("radar-static").onclick=()=>{radarMode="static";radarButtons();radarLoad(true)};
+g("radar-zoom").onclick=()=>radarZoomTo(radarZoom<2?2:radarZoom<3?3:5);
+g("radar-fit").onclick=()=>radarZoomTo(1);
+g("radar-refresh").onclick=()=>radarLoad(true);
+radarView.addEventListener("pointerdown",e=>{if(radarImg.classList.contains("hidden"))return;radarView.setPointerCapture(e.pointerId);radarPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});radarPinch=null});
+radarView.addEventListener("pointermove",e=>{
+ if(!radarPointers.has(e.pointerId))return;
+ const old=radarPointers.get(e.pointerId);
+ radarPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(radarPointers.size===1&&radarZoom>1){radarX+=e.clientX-old.x;radarY+=e.clientY-old.y;radarApply()}
+ else if(radarPointers.size===2){const p=[...radarPointers.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(radarPinch?.distance)radarZoomTo(radarPinch.scale*d/radarPinch.distance);else radarPinch={distance:d,scale:radarZoom}}
+});
+function radarPointerEnd(e){radarPointers.delete(e.pointerId);radarPinch=null}
+radarView.addEventListener("pointerup",radarPointerEnd);radarView.addEventListener("pointercancel",radarPointerEnd);
+radarView.addEventListener("dblclick",()=>radarZoomTo(radarZoom===1?2:1));
+setInterval(()=>{if(activeSection==="radar"&&Date.now()-radarLastRequest>5*60000)radarLoad(true)},60000);
+if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js",{scope:"./"}).then(()=>{if(data)notifyCacheModels()}).catch(()=>{});}
+
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){activeData=null;if(activeSection==="wind")refresh();else if(activeSection==="radar")radarLoad(Date.now()-radarLastRequest>5*60000);else if(activeSection==="nauticari"||activeSection==="pomorci")loadForecast(activeSection)}});
 })();
 </script></body></html>
