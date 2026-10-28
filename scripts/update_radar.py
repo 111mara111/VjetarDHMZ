@@ -10,6 +10,7 @@ from PIL import Image, ImageOps, ImageEnhance
 import pytesseract
 
 OUT=Path(__file__).resolve().parents[1]/"web"/"data"/"radar.json"
+SNAPSHOT=OUT.parent/"radar-latest.png"
 TZ=ZoneInfo("Europe/Zagreb")
 def iso(d):return d.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00","Z")
 def download():
@@ -44,8 +45,12 @@ def main():
   measured=parse_time(img,now)
   age=now-measured
   output.update({"status":"current" if timedelta(minutes=-5)<=age<=timedelta(minutes=35) else "stale","measuredUtc":iso(measured),"frames":nframes})
+  if output["status"]=="current":
+   SNAPSHOT.parent.mkdir(parents=True,exist_ok=True)
+   img.save(SNAPSHOT,format="PNG",optimize=True)
   print("radar",output)
  except Exception as e:print("radar unavailable:",type(e).__name__,str(e)[:200])
+ if output["status"]!="current" and SNAPSHOT.exists():SNAPSHOT.unlink()
  OUT.parent.mkdir(parents=True,exist_ok=True)
  OUT.write_text(json.dumps(output,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
 if __name__=="__main__":main()

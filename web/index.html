@@ -228,7 +228,7 @@ async function radarLoad(force){
    throw Error("Nema potvrđene svježe radarske snimke");
   }
   const path=radarMode==="animation"?"anim_kompozit.gif":"kompozit-stat.png";
-  const imageURL="https://vrijeme.hr/"+path+"?fresh="+Math.floor(Date.now()/300000);
+  const imageURL=radarMode==="static"?"./data/radar-latest.png?measurement="+encodeURIComponent(metadata.measuredUtc):"https://vrijeme.hr/anim_kompozit.gif?fresh="+Math.floor(Date.now()/300000);
   const next=new Image();const timer=setTimeout(()=>{next.onload=null;next.onerror=null;radarPlaceholder.textContent="Radar ne odgovara.";},12000);
   next.onload=()=>{clearTimeout(timer);if(seq!==radarRequestId)return;radarImg.src=next.src;radarImg.classList.remove("hidden");radarPlaceholder.classList.add("hidden");g("radar-info").textContent="DHMZ · mjerenje "+fmt.format(new Date(metadata.measuredUtc))+" · "+(radarMode==="animation"?"animacija":"zadnja slika");};
   next.onerror=()=>{clearTimeout(timer);if(seq!==radarRequestId)return;radarPlaceholder.textContent="Radarska datoteka nije dostupna. Otvori DHMZ poveznicom ispod.";};
