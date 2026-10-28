@@ -30,7 +30,7 @@ def check(region,now):
     if not times:raise ValueError("START MODELA timestamp not verified: "+repr(txt[:220]))
     model=times[0]
     age=now-model
-    status="current" if timedelta(hours=-1)<=age<=timedelta(hours=10) else "stale"
+    status="current" if timedelta(hours=-1)<=age<=timedelta(hours=8) else "stale"
     return {"status":status,"modelUtc":iso(model),"checkedAt":iso(now)}
 def main():
     now=datetime.now(timezone.utc)
@@ -42,7 +42,7 @@ def main():
         except Exception as e:
             regs[region]={"status":"unavailable","checkedAt":iso(now)}
             print(region,"unavailable",str(e)[:150])
-    manifest={"generatedAt":iso(now),"source":"DHMZ ALADIN/HR","maxModelAgeHours":10,"regions":regs}
+    manifest={"generatedAt":iso(now),"source":"DHMZ ALADIN/HR","maxModelAgeHours":8,"regions":regs}
     DEST.parent.mkdir(parents=True,exist_ok=True)
     DEST.write_text(json.dumps(manifest,indent=2,ensure_ascii=False)+"\n")
 if __name__=="__main__":main()

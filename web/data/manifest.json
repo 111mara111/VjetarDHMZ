@@ -1,7 +1,7 @@
 {
   "generatedAt": "2026-10-28T15:45:20Z",
   "source": "DHMZ ALADIN/HR",
-  "maxModelAgeHours": 10,
+  "maxModelAgeHours": 8,
   "regions": {
     "MASL": {
       "status": "current",

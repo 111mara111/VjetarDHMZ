@@ -32,7 +32,7 @@ function blank(text){img.removeAttribute("src");img.classList.add("hidden");g("e
 function verified(key){
  let m=data&&data.regions&&data.regions[key];if(!m||m.status!=="current"||!m.modelUtc||!m.checkedAt)return null;
  let age=Date.now()-Date.parse(m.modelUtc),checked=Date.now()-Date.parse(m.checkedAt);
- return age>=-3600000&&age<=36000000&&checked>=-300000&&checked<=14400000?m:null;
+ return age>=-3600000&&age<=28800000&&checked>=-300000&&checked<=14400000?m:null;
 }
 function src(reg,h){return "https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?fresh="+token}
 function preload(reg,h){
@@ -63,7 +63,7 @@ async function refresh(){
  catch(e){g("status").textContent="Novi podaci nisu potvrđeni";g("meta").textContent="Pokušaj ponovno";blank("Provjera nove prognoze nije uspjela. Ne prikazujem staru kartu.")}
  finally{clearTimeout(timeout);g("refresh").disabled=false}
 }
-g("refresh").onclick=refresh;sl.oninput=()=>show(sl.value);g("prev").onclick=()=>show(hour-1);g("next").onclick=()=>show(hour+1);
+g("refresh").onclick=refresh;let sliderTimer=null;sl.oninput=()=>{g('hour').textContent='+'+sl.value+' h';clearTimeout(sliderTimer);sliderTimer=setTimeout(()=>show(sl.value),110)};g("prev").onclick=()=>show(hour-1);g("next").onclick=()=>show(hour+1);
 document.querySelectorAll("#quick button").forEach(b=>b.onclick=()=>show(b.dataset.h));
 g("play").onclick=()=>{if(tick){stop();return}if(!display)return;g("play").textContent="Ⅱ Pauza";tick=setInterval(()=>{if(!busy&&hour<72)show(hour+1);else if(hour>=72)stop()},900)};
 document.addEventListener("visibilitychange",()=>{if(document.hidden)stop();else if(Date.now()-lastFetch>60000)refresh()});
