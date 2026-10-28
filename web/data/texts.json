@@ -1,9 +1,15 @@
 {
-  "generatedAt": null,
+  "generatedAt": "2026-10-28T16:14:57Z",
   "nauticari": {
-    "status": "unavailable"
+    "status": "current",
+    "issuedUtc": "2026-10-28T11:00:00Z",
+    "checkedAt": "2026-10-28T16:14:57Z",
+    "text": "Izvješće Službe Pomorskog meteorološkog centra Split DHMZ-a dana 28.10.2026. u 12 sati\nUpozorenje\nMjestimice udari bure i sjevernog, na otvorenom moru srednjeg i južnog Jadrana i sjeerozapadnog vjetra 35-45, od večeri podno Velebita do 65 čvorova.\nStanje\nSa sjevera prema Jadranu jača anticiklonalni greben.\nVremenska prognoza za Jadran za prvih 12 sati\nPodno Velebita bura 12-24, od večeri 18-36 čvorova. Drugdje bura i sjeverni, tijekom poslijepodneva i sjeverozapadni vjetar 4-14, na srednjem i južnom Jadranu, a od večeri i na sjevernom 8-18, ponegdje do 24 čvora. More 2-3, na otvorenom srednjeg i južnog Jadrana, a večeras i na sjevernom 3-4. Vidljivost 20 km. Pretežno vedro, na sjevernom i srednjem, a od večeri i južnom Jadranu naoblačenje te krajem dana i u noći na sjevernom i otvorenom moru srednjeg Jadrana mala mogućnost za kišu.\nVremenska prognoza za sljedećih 12 sati\nPodno Velebita jaka do olujna bura. Drugdje umjerena do pojačana, ponegdje i jaka bura i sjeverni vjetar. More malo do umjereno valovito, u Velebitskom kanalu i na otvorenom i valovito. Umjereno do pretežno oblačno, na sjevernom i otvorenom moru srednjeg Jadrana mala mogućnost za kišu."
   },
   "pomorci": {
-    "status": "unavailable"
+    "status": "current",
+    "issuedUtc": "2026-10-28T11:00:00Z",
+    "checkedAt": "2026-10-28T16:14:57Z",
+    "text": "Prognoza za pomorce (NAVTEX), dan 28.10.2026 u 12:00 sati\nUpozorenje\nMjestimice udari NE i N, na otvorenom moru srednjeg i južnog Jadrana i NW vjetra 35-45, od večeri podno Velebita do 65 čvorova.\nStanje\nSa sjevera prema Jadranu jača anticiklonalni greben.\nVremenska prognoza za sljedeća 24 sata, vrijedi do: 29.10.2026 u 12 sati\nSjeverni Jadran\nPodno Velebita NE 12-24, od večeri 18-36 čvorova. Drugdje vjetar NE i N, na otvorenom moru tijekom poslijepodneva i NW 4-14, navečer u jačanju na 8-18, ponegdje do 24 čvora. More 2-3, od večeri na otvorenom i u Velebitskom kanalu 3-4. Vidljivost 20 km. Umjereno do pretežno oblačno, od večeri mala mogućnost za kišu.\nSrednji Jadran\nVjetar NE i N, na otvorenom moru, a tijekom poslijepodneva i uz obalu NW 8-18, ponegdje do 24 čvora. More 2-3, na otvorenom 3-4. Vidljivost 20 km. Umjereno do pretežno oblačno, u noći na otvorenom moru mala mogućnost za kišu.\nJužni Jadran\nVjetar NE i N, na otvorenom moru, a tijekom poslijepodneva i uz obalu NW 8-18, ponegdje do 24 čvora. More 2-3, na otvorenom 3-4. Vidljivost 20 km. Pretežno vedro, od večeri umjereno do pretežno oblačno."
   }
 }
