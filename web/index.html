@@ -96,7 +96,7 @@ async function refresh(){
  catch(e){g("status").textContent="Novi podaci nisu potvrđeni";g("meta").textContent="Pokušaj ponovno";blank("Provjera nove prognoze nije uspjela. Ne prikazujem staru kartu.")}
  finally{clearTimeout(timeout);g("refresh").disabled=false}
 }
-g("refresh").onclick=refresh;let sliderTimer=null;sl.oninput=()=>{g('hour').textContent='+'+sl.value+' h';clearTimeout(sliderTimer);sliderTimer=setTimeout(()=>show(sl.value),110)};g("prev").onclick=()=>show(hour-1);g("next").onclick=()=>show(hour+1);
+g("refresh").onclick=refresh;let sliderTimer=null;sl.oninput=()=>{g('hour').textContent='+'+sl.value+' h';clearTimeout(sliderTimer);sliderTimer=setTimeout(()=>{stop();show(sl.value)},110)};g("prev").onclick=()=>{stop();show(hour-1)};g("next").onclick=()=>{stop();show(hour+1)};
 document.querySelectorAll("#quick button").forEach(b=>b.onclick=()=>show(b.dataset.h));
 g("play").onclick=()=>{if(tick){stop();return}if(!display)return;g("play").textContent="Ⅱ Pauza";tick=setInterval(()=>{if(!busy&&hour<72)show(hour+1);else if(hour>=72)stop()},900)};
 document.addEventListener("visibilitychange",()=>{if(document.hidden)stop()});
@@ -138,7 +138,7 @@ view.addEventListener("dblclick",()=>zoomTo(zoomScale>1?1:2));
 g("install").onclick=()=>g("install-dialog").showModal();
 g("close-dialog").onclick=()=>g("install-dialog").close();
 document.querySelectorAll(".main-nav button").forEach(b=>b.onclick=()=>chooseSection(b.dataset.section));
-document.querySelectorAll(".days button").forEach(b=>b.onclick=()=>show(Number(b.dataset.h)));
+document.querySelectorAll(".days button").forEach(b=>b.onclick=()=>{stop();show(Number(b.dataset.h))});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){activeData=null;if(activeSection==="wind")refresh();else if(activeSection==="nauticari"||activeSection==="pomorci")loadForecast(activeSection)}});
 })();
 </script></body></html>
