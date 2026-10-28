@@ -1,0 +1,72 @@
+<!doctype html><html lang="hr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0c1c2e"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Vjetar Jadran"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml"><title>Vjetar Jadran</title>
+<style>
+:root{color-scheme:light dark;--bg:#f2f6fa;--box:#fff;--text:#102638;--muted:#526a7c;--border:#d3e0ec;--accent:#0787be;--soft:#def2ff}
+@media(prefers-color-scheme:dark){:root{--bg:#091522;--box:#14283a;--text:#f3f8ff;--muted:#adc3d3;--border:#355064;--accent:#65d6ff;--soft:#15374e}}
+*{box-sizing:border-box}html{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}body{margin:0;background:var(--bg);color:var(--text)}
+main{max-width:900px;margin:auto;padding:calc(16px + env(safe-area-inset-top)) 12px calc(20px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:14px}h1{font-size:23px;letter-spacing:-.4px;margin:0}h1 small{display:block;margin-top:3px;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:1px}
+button{border:1px solid var(--border);background:var(--box);color:var(--text);border-radius:12px;font:inherit;font-weight:600;padding:10px 13px;cursor:pointer}button:disabled{opacity:.4}
+button.primary{background:var(--accent);color:#042333;border-color:var(--accent)}.tabs{display:flex;gap:7px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}.tabs button{white-space:nowrap;flex-shrink:0;font-size:13px}.tabs button[aria-selected=true]{border-color:var(--accent);background:var(--soft);color:var(--accent)}
+section{background:var(--box);border:1px solid var(--border);border-radius:16px;overflow:hidden}.status{padding:12px 13px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-bottom:1px solid var(--border);font-size:13px}.status small{color:var(--muted)}#warning{background:var(--soft);padding:10px 13px;font-size:13px}
+.hidden{display:none!important}.map{min-height:320px;display:grid;place-items:center;position:relative;background:#fff}.map img{width:100%;max-width:760px;display:block;object-fit:contain}.empty{background:var(--bg);padding:24px 18px;max-width:330px;color:var(--muted);line-height:1.5;text-align:center;border-radius:12px}.loading{position:absolute;inset:0;display:grid;place-items:center;background:#0006;color:#fff;font-weight:650}
+.controls{padding:13px}.time{display:flex;align-items:center;justify-content:space-between;gap:12px}.time strong{font-size:21px}.time span{font-size:13px;color:var(--muted)}
+input[type=range]{width:100%;margin:15px 0;accent-color:var(--accent)}.quick,.actions{display:flex;flex-wrap:wrap;gap:7px}.quick button{flex:1;font-size:12px;padding:8px 9px}.actions{margin-top:14px}
+footer{font-size:12px;color:var(--muted);margin:15px 4px;line-height:1.6}footer a{color:var(--accent)}
+@media(min-width:700px){.map img{width:auto;max-width:100%;max-height:70vh}}
+</style></head><body><main><header><h1>Vjetar Jadran<small>DHMZ · ALADIN/HR · 72 h</small></h1><button id="refresh">↻ Osvježi</button></header>
+<nav class="tabs" id="tabs" aria-label="Područja"></nav><section><div class="status"><strong id="status">Provjeravam model…</strong><small id="meta">Ne prikazujem stare karte</small></div><div id="warning" class="hidden" role="status"></div><div class="map"><div id="empty" class="empty">Preuzimam najnoviju potvrđenu prognozu…</div><img id="image" class="hidden" alt="Karta vjetra DHMZ"><div id="loading" class="loading hidden">Preuzimam kartu…</div></div>
+<div class="controls"><div class="time"><strong id="hour">+0 h</strong><span id="date">Čekam podatke…</span></div><input id="slider" type="range" min="0" max="72" step="1" value="0" disabled aria-label="Sat prognoze"><div class="quick" id="quick"><button data-h="0">+0 h</button><button data-h="12">+12 h</button><button data-h="24">+24 h</button><button data-h="36">+36 h</button><button data-h="48">+48 h</button><button data-h="60">+60 h</button><button data-h="72">+72 h</button></div><div class="actions"><button id="play" class="primary" disabled>▶ Pokreni</button><button id="prev" disabled>− 1 h</button><button id="next" disabled>+ 1 h</button></div></div></section>
+<footer>Izvor: <a href="https://www.meteo.hr/infrastruktura.php?param=aladin&amp;section=prognosticki_modeli">DHMZ ALADIN/HR</a>. Svaki ulazak traži novi podatak; stariji modeli nisu dopušteni. Vrijeme početka modela različito je od vremena kada je provjeren. Model je prognoza, a ne trenutačno mjerenje.</footer></main>
+<script>
+(function(){
+"use strict";
+const regs=[["MASL","Zadar"],["SENJ","Istra + Kvarner"],["SPLI","Split"],["DUBR","Dubrovnik"],["HRv8","Hrvatska"]];
+const g=id=>document.getElementById(id),img=g("image"),sl=g("slider"),tabs=g("tabs");
+const fmt=new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+let data=null,selected="MASL",display="",hour=0,token="",pending=0,tick=null,busy=false,cache=new Map(),lastFetch=0;
+regs.forEach(r=>{let b=document.createElement("button");b.textContent=r[1];b.dataset.r=r[0];b.onclick=()=>{selected=r[0];tabsDraw();draw()};tabs.append(b)});
+function tabsDraw(){Array.from(tabs.children).forEach(b=>b.setAttribute("aria-selected",String(b.dataset.r===selected)))}
+function stop(){if(tick)clearInterval(tick);tick=null;g("play").textContent="▶ Pokreni"}
+function controls(state){["slider","play","prev","next"].forEach(x=>g(x).disabled=!state);document.querySelectorAll("#quick button").forEach(b=>b.disabled=!state)}
+function blank(text){img.removeAttribute("src");img.classList.add("hidden");g("empty").textContent=text;g("empty").classList.remove("hidden");controls(false)}
+function verified(key){
+ let m=data&&data.regions&&data.regions[key];if(!m||m.status!=="current"||!m.modelUtc||!m.checkedAt)return null;
+ let age=Date.now()-Date.parse(m.modelUtc),checked=Date.now()-Date.parse(m.checkedAt);
+ return age>=-3600000&&age<=36000000&&checked>=-300000&&checked<=14400000?m:null;
+}
+function src(reg,h){return "https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?fresh="+token}
+function preload(reg,h){
+ let k=reg+"_"+h;if(cache.has(k))return cache.get(k);
+ let p=new Promise((resolve,reject)=>{const i=new Image();let timeout=setTimeout(()=>reject(Error("DHMZ ne odgovara")),14000);i.onload=()=>{clearTimeout(timeout);resolve(i)};i.onerror=()=>{clearTimeout(timeout);reject(Error("Karta nije dostupna"))};i.src=src(reg,h)});
+ cache.set(k,p);p.catch(()=>{if(cache.get(k)===p)cache.delete(k)});if(cache.size>12)cache.delete(cache.keys().next().value);return p;
+}
+async function show(h){
+ if(!display)return;
+ let seq=++pending,reg=display,n=Math.min(72,Math.max(0,Number(h)));hour=n;sl.value=n;g("hour").textContent="+"+n+" h";
+ const m=verified(reg);if(!m){stop();draw();return}
+ g("date").textContent=fmt.format(new Date(Date.parse(m.modelUtc)+n*3600000));g("loading").classList.remove("hidden");busy=true;
+ try{let loaded=await preload(reg,n);if(seq!==pending||display!==reg)return;img.src=loaded.src;img.classList.remove("hidden");g("empty").classList.add("hidden");if(n<72)preload(reg,n+1).catch(()=>{})}
+ catch(e){if(seq===pending){stop();blank("Preuzimanje nije uspjelo. Pritisnite Osvježi. "+e.message)}}
+ finally{if(seq===pending){busy=false;g("loading").classList.add("hidden")}}
+}
+function draw(){
+ stop();pending++;busy=false;cache.clear();token=String(Date.now())+"_"+Math.random().toString(36).slice(2);g("warning").classList.add("hidden");blank("Učitavam svježu kartu…");
+ let actual=selected,m=verified(actual);
+ if(!m&&selected!=="HRv8"&&verified("HRv8")){actual="HRv8";m=verified(actual);g("warning").textContent="DHMZ nema svježu regionalnu kartu za "+regs.find(x=>x[0]===selected)[1]+". Prikazana je aktualna karta cijele Hrvatske.";g("warning").classList.remove("hidden")}
+ if(!m){display="";g("status").textContent="Svježa prognoza nije dostupna";g("meta").textContent="Bez starih podataka";blank("Trenutačno nema provjerene nove DHMZ karte. Stare karte ne prikazujem.");return}
+ display=actual;g("status").textContent="Aktualni model · "+regs.find(x=>x[0]===actual)[1];g("meta").textContent="Model "+fmt.format(new Date(m.modelUtc))+" · provjera "+fmt.format(new Date(m.checkedAt));controls(true);show(0);
+}
+async function refresh(){
+ stop();pending++;display="";data=null;cache.clear();lastFetch=Date.now();g("loading").classList.add("hidden");g("warning").classList.add("hidden");blank("Provjeravam najnoviji model s izvora…");g("status").textContent="Provjeravam novu DHMZ prognozu…";g("meta").textContent="Bez prikaza prethodne karte";g("refresh").disabled=true;
+ const ac=new AbortController(),timeout=setTimeout(()=>ac.abort(),12000);
+ try{let r=await fetch("./data/manifest.json?check="+Date.now(),{cache:"no-store",signal:ac.signal});if(!r.ok)throw Error("Status "+r.status);let m=await r.json();if(!m.generatedAt||!m.regions)throw Error("Provjera nije potpuna");data=m;draw()}
+ catch(e){g("status").textContent="Novi podaci nisu potvrđeni";g("meta").textContent="Pokušaj ponovno";blank("Provjera nove prognoze nije uspjela. Ne prikazujem staru kartu.")}
+ finally{clearTimeout(timeout);g("refresh").disabled=false}
+}
+g("refresh").onclick=refresh;sl.oninput=()=>show(sl.value);g("prev").onclick=()=>show(hour-1);g("next").onclick=()=>show(hour+1);
+document.querySelectorAll("#quick button").forEach(b=>b.onclick=()=>show(b.dataset.h));
+g("play").onclick=()=>{if(tick){stop();return}if(!display)return;g("play").textContent="Ⅱ Pauza";tick=setInterval(()=>{if(!busy&&hour<72)show(hour+1);else if(hour>=72)stop()},900)};
+document.addEventListener("visibilitychange",()=>{if(document.hidden)stop();else if(Date.now()-lastFetch>60000)refresh()});
+window.addEventListener("pageshow",e=>{if(e.persisted&&Date.now()-lastFetch>60000)refresh()});tabsDraw();refresh();
+})();
+</script></body></html>

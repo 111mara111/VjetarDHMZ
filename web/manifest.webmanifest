@@ -1,0 +1,15 @@
+{
+  "name": "Vjetar Jadran – DHMZ",
+  "short_name": "Vjetar",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#091522",
+  "theme_color": "#0c1c2e",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ]
+}
