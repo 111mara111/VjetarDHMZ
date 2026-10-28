@@ -11,7 +11,7 @@ on:
     - cron: '13,43 * * * *'
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 concurrency:
@@ -34,12 +34,6 @@ jobs:
           pip install --disable-pip-version-check pillow pytesseract beautifulsoup4
       - run: python scripts/update_forecast.py
       - run: python scripts/update_text_forecasts.py
-      - name: Store verified timestamps
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/data/manifest.json web/data/texts.json
-          git diff --cached --quiet || (git commit -m "Refresh ALADIN model times [skip ci]" && git push)
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
