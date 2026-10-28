@@ -6,6 +6,7 @@ on:
       - 'web/**'
       - 'scripts/update_forecast.py'
       - 'scripts/update_text_forecasts.py'
+      - 'scripts/update_radar.py'
       - '.github/workflows/adriatic-web.yml'
   schedule:
     - cron: '13,43 * * * *'
@@ -34,6 +35,7 @@ jobs:
           pip install --disable-pip-version-check pillow pytesseract beautifulsoup4
       - run: python scripts/update_forecast.py
       - run: python scripts/update_text_forecasts.py
+      - run: python scripts/update_radar.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
