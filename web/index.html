@@ -54,7 +54,7 @@ function draw(){
  let actual=selected,m=verified(actual);
  if(!m&&selected!=="HRv8"&&verified("HRv8")){actual="HRv8";m=verified(actual);g("warning").textContent="DHMZ nema svježu regionalnu kartu za "+regs.find(x=>x[0]===selected)[1]+". Prikazana je aktualna karta cijele Hrvatske.";g("warning").classList.remove("hidden")}
  if(!m){display="";g("status").textContent="Svježa prognoza nije dostupna";g("meta").textContent="Bez starih podataka";blank("Trenutačno nema provjerene nove DHMZ karte. Stare karte ne prikazujem.");return}
- display=actual;g("status").textContent="Aktualni model · "+regs.find(x=>x[0]===actual)[1];g("meta").textContent="Model "+fmt.format(new Date(m.modelUtc))+" · provjera "+fmt.format(new Date(m.checkedAt));controls(true);show(0);
+ display=actual;g("status").textContent="Aktualni model · "+regs.find(x=>x[0]===actual)[1];g("meta").textContent="Model "+fmt.format(new Date(m.modelUtc))+" · provjera "+fmt.format(new Date(m.checkedAt));controls(true);show(Math.min(72,Math.max(0,Math.round((Date.now()-Date.parse(m.modelUtc))/3600000))));
 }
 async function refresh(){
  stop();pending++;display="";data=null;cache.clear();lastFetch=Date.now();g("loading").classList.add("hidden");g("warning").classList.add("hidden");blank("Provjeravam najnoviji model s izvora…");g("status").textContent="Provjeravam novu DHMZ prognozu…";g("meta").textContent="Bez prikaza prethodne karte";g("refresh").disabled=true;

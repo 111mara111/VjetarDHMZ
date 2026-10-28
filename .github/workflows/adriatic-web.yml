@@ -7,7 +7,7 @@ on:
       - 'scripts/update_forecast.py'
       - '.github/workflows/adriatic-web.yml'
   schedule:
-    - cron: '17 */2 * * *'
+    - cron: '13,43 * * * *'
   workflow_dispatch:
 permissions:
   contents: write
@@ -19,6 +19,9 @@ concurrency:
 jobs:
   verify-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -2,6 +2,7 @@
 import io,json,re,time,urllib.request
 from pathlib import Path
 from datetime import datetime,timezone,timedelta
+from zoneinfo import ZoneInfo
 from PIL import Image,ImageOps,ImageEnhance
 import pytesseract
 
@@ -23,10 +24,10 @@ def check(region,now):
     for psm in (6,11):
         txt=pytesseract.image_to_string(crop,config="--psm "+str(psm))
         # Only accept a date alongside the printed model start time from bottom of PNG
-        for m in re.finditer(r"(\d{1,2})\s*[./,]\s*(\d{1,2})\s*[./,]\s*(20\d{2})\s+(\d{1,2})",txt):
+        for m in re.finditer(r"START\s*MODELA\s*:?\s*(\d{1,2})\s*[./,]\s*(\d{1,2})\s*[./,]\s*(20\d{2})\s+(\d{1,2})",txt,re.I):
             day,mo,yr,hr=map(int,m.groups())
-            times.append(datetime(yr,mo,day,hr,tzinfo=timezone.utc))
-    if not times:raise ValueError("Model time OCR unavailable")
+            times.append(datetime(yr,mo,day,hr,tzinfo=ZoneInfo("Europe/Zagreb")).astimezone(timezone.utc))
+    if not times:raise ValueError("START MODELA timestamp not verified: "+repr(txt[:220]))
     model=times[0]
     age=now-model
     status="current" if timedelta(hours=-1)<=age<=timedelta(hours=10) else "stale"
