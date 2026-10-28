@@ -1,32 +1,32 @@
 {
-  "generatedAt": "2026-10-28T15:42:51Z",
+  "generatedAt": "2026-10-28T15:45:20Z",
   "source": "DHMZ ALADIN/HR",
   "maxModelAgeHours": 10,
   "regions": {
     "MASL": {
       "status": "current",
-      "modelUtc": "2026-10-28T13:00:00Z",
-      "checkedAt": "2026-10-28T15:42:51Z"
+      "modelUtc": "2026-10-28T12:00:00Z",
+      "checkedAt": "2026-10-28T15:45:20Z"
     },
     "SENJ": {
       "status": "current",
-      "modelUtc": "2026-10-28T13:00:00Z",
-      "checkedAt": "2026-10-28T15:42:51Z"
+      "modelUtc": "2026-10-28T12:00:00Z",
+      "checkedAt": "2026-10-28T15:45:20Z"
     },
     "SPLI": {
       "status": "current",
-      "modelUtc": "2026-10-28T13:00:00Z",
-      "checkedAt": "2026-10-28T15:42:51Z"
+      "modelUtc": "2026-10-28T12:00:00Z",
+      "checkedAt": "2026-10-28T15:45:20Z"
     },
     "DUBR": {
       "status": "current",
-      "modelUtc": "2026-10-28T13:00:00Z",
-      "checkedAt": "2026-10-28T15:42:51Z"
+      "modelUtc": "2026-10-28T12:00:00Z",
+      "checkedAt": "2026-10-28T15:45:20Z"
     },
     "HRv8": {
       "status": "current",
-      "modelUtc": "2026-10-28T13:00:00Z",
-      "checkedAt": "2026-10-28T15:42:51Z"
+      "modelUtc": "2026-10-28T12:00:00Z",
+      "checkedAt": "2026-10-28T15:45:20Z"
     }
   }
 }
