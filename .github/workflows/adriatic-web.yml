@@ -10,6 +10,7 @@ on:
       - 'scripts/benchmark_loading.mjs'
       - 'scripts/update_text_forecasts.py'
       - 'scripts/update_radar.py'
+      - 'scripts/test_radar.mjs'
       - '.github/workflows/adriatic-web.yml'
   schedule:
     - cron: '*/10 * * * *'
@@ -55,6 +56,11 @@ jobs:
           npm install --no-save --no-audit --no-fund playwright-core
           node scripts/benchmark_browser.mjs
 
+      - name: Test radar display with delayed DHMZ metadata
+        if: github.event_name != 'schedule'
+        run: |
+          npm install --no-save --no-audit --no-fund playwright-core
+          node scripts/test_radar.mjs
       - name: Compare loading before and after optimization
         if: github.event_name != 'schedule'
         run: |

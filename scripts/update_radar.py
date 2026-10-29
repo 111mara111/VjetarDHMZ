@@ -11,6 +11,7 @@ import pytesseract
 
 OUT=Path(__file__).resolve().parents[1]/"web"/"data"/"radar.json"
 SNAPSHOT=OUT.parent/"radar-latest.png"
+PREVIEW=OUT.parent/"radar-latest.webp"
 ANIMATION=OUT.parent/"radar-animation.gif"
 FRAME_DIR=OUT.parent/"radar-frames"
 TZ=ZoneInfo("Europe/Zagreb")
@@ -51,6 +52,8 @@ def main():
   if output["status"]=="current":
    SNAPSHOT.parent.mkdir(parents=True,exist_ok=True)
    img.save(SNAPSHOT,format="PNG",optimize=True)
+   img.save(PREVIEW,format="WEBP",quality=84,method=4)
+   output["previewPath"]="data/radar-latest.webp"
    ANIMATION.write_bytes(animation_blob)
    if FRAME_DIR.exists():shutil.rmtree(FRAME_DIR)
    FRAME_DIR.mkdir(parents=True)
@@ -65,7 +68,7 @@ def main():
      if digest not in encoded:
       name=f"{version}-{i:03d}"
       frame.save(FRAME_DIR/(name+".png"),format="PNG",optimize=True)
-      frame.save(FRAME_DIR/(name+".webp"),format="WEBP",lossless=True,method=4)
+      frame.save(FRAME_DIR/(name+".webp"),format="WEBP",quality=84,method=4)
       encoded[digest]=name
      name=encoded[digest]
      entry={"path":"data/radar-frames/"+name+".png","webpPath":"data/radar-frames/"+name+".webp"}
@@ -77,6 +80,7 @@ def main():
  except Exception as e:print("radar unavailable:",type(e).__name__,str(e)[:200])
  if output["status"]!="current":
   if SNAPSHOT.exists():SNAPSHOT.unlink()
+  if PREVIEW.exists():PREVIEW.unlink()
   if ANIMATION.exists():ANIMATION.unlink()
   if FRAME_DIR.exists():shutil.rmtree(FRAME_DIR)
  OUT.parent.mkdir(parents=True,exist_ok=True)
