@@ -10,6 +10,7 @@ on:
       - 'scripts/benchmark_loading.mjs'
       - 'scripts/update_text_forecasts.py'
       - 'scripts/update_radar.py'
+      - 'scripts/generate_apple_icons.py'
       - 'scripts/test_radar.mjs'
       - '.github/workflows/adriatic-web.yml'
   schedule:
@@ -42,6 +43,8 @@ jobs:
       - run: python scripts/update_forecast.py
       - run: python scripts/update_text_forecasts.py
       - run: python scripts/update_radar.py
+      - name: Generate iPhone / iPad Home Screen PNG icons
+        run: python scripts/generate_apple_icons.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
