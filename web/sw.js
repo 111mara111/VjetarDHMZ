@@ -8,6 +8,22 @@ self.addEventListener("activate",event=>event.waitUntil((async()=>{
   await self.clients.claim();
 })()));
 self.addEventListener("message",event=>{
+ if(event.data?.type==="LIST_FRAMES"){
+   event.waitUntil((async()=>{
+     const {region,model}=event.data;
+     const results=[];
+     if(!/^(MASL|SENJ|SPLI|DUBR|HRv8)$/.test(region)||!/^\d{4}-\d\d-\d\dT/.test(model||""))return;
+     const cache=await caches.open(WIND_CACHE);
+     for(const req of await cache.keys()){
+       const u=new URL(req.url);
+       if(u.searchParams.get("model")!==model)continue;
+       const match=u.pathname.match(new RegExp("web_uv10_"+region+"_(\\d{2})\\.png$"));
+       if(match)results.push(Number(match[1]));
+     }
+     event.ports?.[0]?.postMessage({hours:results});
+   })());
+   return;
+ }
  if(event.data?.type!=="KEEP_MODELS"||!Array.isArray(event.data.models))return;
  const versions=new Set(event.data.models.filter(v=>typeof v==="string"&&/^\d{4}-\d\d-\d\dT/.test(v)));
  event.waitUntil((async()=>{

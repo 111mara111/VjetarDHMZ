@@ -5,6 +5,7 @@ on:
     paths:
       - 'web/**'
       - 'scripts/update_forecast.py'
+      - 'scripts/benchmark_first_frame.py'
       - 'scripts/update_text_forecasts.py'
       - 'scripts/update_radar.py'
       - '.github/workflows/adriatic-web.yml'
@@ -41,3 +42,6 @@ jobs:
         with:
           path: web
       - uses: actions/deploy-pages@v4
+      - name: Measure cold first-image transfer (direct DHMZ versus optimized preview)
+        continue-on-error: true
+        run: python scripts/benchmark_first_frame.py

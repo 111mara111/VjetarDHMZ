@@ -8,13 +8,22 @@ import pytesseract
 
 REGIONS=("MASL","SENJ","SPLI","DUBR","HRv8")
 DEST=Path(__file__).resolve().parents[1]/"web"/"data"/"manifest.json"
+ASSETS=DEST.parent
+def get_frame(region,hour):
+    url=("https://prognoza.hr/aladinHR/web_uv10_"+region+"_"
+         +str(hour).zfill(2)+".png?nocache="+str(time.time_ns()))
+    req=urllib.request.Request(url,headers={"User-Agent":"Mozilla/5.0 (AdriaticForecastVerifier)","Cache-Control":"no-cache"})
+    with urllib.request.urlopen(req,timeout=18) as response:
+        raw=response.read(5000000)
+    if not raw.startswith(bytes((137,80,78,71,13,10,26,10))):
+        raise ValueError("Not a PNG")
+    test=Image.open(io.BytesIO(raw))
+    test.verify()
+    return raw
+
 def iso(t):return t.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00","Z")
 def check(region,now):
-    url="https://prognoza.hr/aladinHR/web_uv10_"+region+"_00.png?nocache="+str(time.time_ns())
-    request=urllib.request.Request(url,headers={"User-Agent":"Mozilla/5.0 (AdriaticForecastVerifier)","Cache-Control":"no-cache"})
-    with urllib.request.urlopen(request,timeout=24) as response:
-        raw=response.read(5000000)
-    if not raw.startswith(bytes((137,80,78,71,13,10,26,10))):raise ValueError("Not PNG")
+    raw=get_frame(region,0)
     im=Image.open(io.BytesIO(raw)).convert("RGB")
     w,h=im.size
     crop=ImageOps.grayscale(im.crop((0,int(h*.90),int(w*.72),h)))
@@ -38,6 +47,18 @@ def main():
     for region in REGIONS:
         try:
             regs[region]=check(region,now)
+            if regs[region]["status"]=="current":
+                model=datetime.fromisoformat(regs[region]["modelUtc"].replace("Z","+00:00"))
+                preview_hour=max(0,min(72,round((now-model).total_seconds()/3600)))
+                try:
+                    blob=get_frame(region,preview_hour)
+                    ASSETS.mkdir(parents=True,exist_ok=True)
+                    (ASSETS/("wind_"+region+".png")).write_bytes(blob)
+                    regs[region]["previewHour"]=preview_hour
+                    regs[region]["previewPath"]="data/wind_"+region+".png"
+                    print("FAST_PREVIEW",region,preview_hour,len(blob))
+                except Exception as exc:
+                    print("FAST_PREVIEW",region,"unavailable",str(exc)[:100])
             print(region,regs[region])
         except Exception as e:
             regs[region]={"status":"unavailable","checkedAt":iso(now)}

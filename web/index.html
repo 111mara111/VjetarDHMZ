@@ -32,6 +32,11 @@ footer{font-size:12px;color:var(--muted);margin:15px 4px;line-height:1.6}footer 
 .douglas{border-collapse:collapse;width:100%;font-size:13px}.douglas th,.douglas td{border-bottom:1px solid var(--border);padding:10px 6px;text-align:left}.douglas th{color:var(--muted)}.douglas td:first-child{font-weight:750}
 dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius:16px;color:var(--text);background:var(--box);padding:20px}dialog::backdrop{background:#0009}
 @media(max-width:450px){.main-nav button{font-size:12px;padding:9px 7px}.maptools{width:100%}.maptools button{flex:1}.days button{font-size:11px}}
+
+.progress-readout{flex:1;min-width:155px;text-align:center;font-size:12px;font-weight:650;color:var(--muted);font-variant-numeric:tabular-nums}
+.progress-track{height:5px;border-radius:8px;overflow:hidden;background:var(--border);margin-top:12px}
+#wind-progress-fill{height:100%;width:0;background:var(--accent);transition:width .18s ease}
+@media(max-width:520px){.progress-readout{min-width:calc(100% - 140px);text-align:right}.actions #prev,.actions #next{font-size:12px}}
 </style></head><body><main><header class="masthead"><div><small class="subtitle">DHMZ · ALADIN/HR</small><h1>Vjetar Jadran</h1></div><button id="install" type="button">Dodaj na iPhone ＋</button></header><nav class="main-nav" aria-label="Dijelovi aplikacije">
 <button type="button" data-section="wind" aria-selected="true">Vjetar</button>
 <button type="button" data-section="nauticari" aria-selected="false">Nautičari</button>
@@ -40,7 +45,7 @@ dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius
 <button type="button" data-section="douglas" aria-selected="false">Douglas</button>
 </nav><div id="wind" class="view">
 <nav class="tabs" id="tabs" aria-label="Područja"></nav><section><div class="map-title"><strong id="title">DHMZ vjetar: Zadar, +0 sati</strong><div class="maptools"><button id="fit" type="button">Cijela karta</button><button id="zoom" type="button">Povećaj</button><button id="refresh">Osvježi prognozu ↻</button></div></div><div class="status"><strong id="status">Provjeravam model…</strong><small id="meta">Ne prikazujem stare karte</small></div><div id="warning" class="hidden" role="status"></div><div class="map" id="map-container"><div id="empty" class="empty">Preuzimam najnoviju potvrđenu prognozu…</div><img id="image" class="hidden" alt="Karta vjetra DHMZ"><div id="loading" class="loading hidden">Preuzimam kartu…</div></div>
-<div class="controls"><div class="time"><strong id="hour">+0 h</strong><span id="date">Čekam podatke…</span></div><input id="slider" type="range" min="0" max="72" step="1" value="0" disabled aria-label="Sat prognoze"><div class="days"><button data-h="0">1. dan</button><button data-h="24">2. dan</button><button data-h="48">3. dan</button><button data-h="72">+72 h</button></div><div class="quick" id="quick"><button data-h="0">+0 h</button><button data-h="12">+12 h</button><button data-h="24">+24 h</button><button data-h="36">+36 h</button><button data-h="48">+48 h</button><button data-h="60">+60 h</button><button data-h="72">+72 h</button></div><div class="actions"><button id="play" class="primary" disabled>▶ Pokreni</button><button id="prev" disabled>− 1 h</button><button id="next" disabled>+ 1 h</button></div></div></section></div>
+<div class="controls"><div class="time"><strong id="hour">+0 h</strong><span id="date">Čekam podatke…</span></div><input id="slider" type="range" min="0" max="72" step="1" value="0" disabled aria-label="Sat prognoze"><div class="days"><button data-h="0">1. dan</button><button data-h="24">2. dan</button><button data-h="48">3. dan</button><button data-h="72">+72 h</button></div><div class="quick" id="quick"><button data-h="0">+0 h</button><button data-h="12">+12 h</button><button data-h="24">+24 h</button><button data-h="36">+36 h</button><button data-h="48">+48 h</button><button data-h="60">+60 h</button><button data-h="72">+72 h</button></div><div class="actions"><button id="play" class="primary" disabled>▶ Pokreni</button><span class="progress-readout" id="loadinfo" aria-live="polite">Učitano 0 od 73 karte</span><button id="prev" disabled>− 1 h</button><button id="next" disabled>+ 1 h</button></div><div class="progress-track" role="progressbar" aria-label="Učitane karte vjetra" aria-valuemin="0" aria-valuemax="73" aria-valuenow="0" id="wind-progress"><div id="wind-progress-fill"></div></div></div></section></div>
 <section id="nauticari" class="view panel hidden"><h2>Prognoza za Jadran za nautičare</h2><div class="forecast-stamp" id="stamp-nauticari"></div><div class="forecast-text" id="text-nauticari">Učitavam aktualno izvješće…</div><a class="external" href="https://meteo.hr/prognoze.php?param=jadran&amp;section=prognoze_specp" target="_blank" rel="noopener">Otvori na DHMZ-u</a></section>
 <section id="pomorci" class="view panel hidden"><h2>Prognoza za pomorce (NAVTEX)</h2><div class="forecast-stamp" id="stamp-pomorci"></div><div class="forecast-text" id="text-pomorci">Učitavam aktualno izvješće…</div><a class="external" href="https://meteo.hr/prognoze.php?param=pomorci&amp;section=prognoze_specp" target="_blank" rel="noopener">Otvori na DHMZ-u</a></section>
 <section id="radar" class="view panel hidden"><h2>Radar oborina</h2><div class="forecast-stamp">DHMZ · radarska slika i animacija</div><div id="radar-container">
@@ -69,6 +74,7 @@ const regs=[["MASL","Zadar"],["SENJ","Istra + Kvarner"],["SPLI","Split"],["DUBR"
 const g=id=>document.getElementById(id),img=g("image"),sl=g("slider"),tabs=g("tabs");
 const fmt=new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
 let data=null,selected="MASL",display="",hour=0,pending=0,tick=null,busy=false,cache=new Map(),lastFetch=0,refreshSequence=0;
+let preloadGeneration=0,loadedByModel=new Map(),startupStarted=performance.now(),reportedFirst=false;
 regs.forEach(r=>{let b=document.createElement("button");b.textContent=r[1];b.dataset.r=r[0];b.onclick=()=>{selected=r[0];tabsDraw();draw()};tabs.append(b)});
 function tabsDraw(){Array.from(tabs.children).forEach(b=>b.setAttribute("aria-selected",String(b.dataset.r===selected)))}
 function stop(){if(tick)clearInterval(tick);tick=null;g("play").textContent="▶ Pokreni"}
@@ -77,35 +83,111 @@ function blank(text){img.removeAttribute("src");img.classList.add("hidden");g("e
 function verified(key){
  let m=data&&data.regions&&data.regions[key];if(!m||m.status!=="current"||!m.modelUtc||!m.checkedAt)return null;
  let age=Date.now()-Date.parse(m.modelUtc),checked=Date.now()-Date.parse(m.checkedAt);
- return age>=-3600000&&age<=28800000&&checked>=-300000&&checked<=14400000?m:null;
+ return age>=-3600000&&age<=28800000&&checked>=-300000&&checked<=28800000?m:null;
 }
-function src(reg,h){const model=verified(reg)?.modelUtc;if(!model)throw Error("Model nije potvrđen");return "https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?model="+encodeURIComponent(model)}
+function modelKey(reg){
+ const m=verified(reg);
+ return m?reg+"|"+m.modelUtc:null;
+}
+function markLoaded(reg,h){
+ const key=modelKey(reg);
+ if(!key)return;
+ let done=loadedByModel.get(key);
+ if(!done){done=new Set();loadedByModel.set(key,done)}
+ done.add(Number(h));
+ if(reg===display)progressUpdate();
+}
+function progressUpdate(){
+ const n=loadedByModel.get(modelKey(display))?.size||0;
+ g("loadinfo").textContent="Učitano "+n+" od 73 karte"+(n===73?" · spremno za animaciju":"");
+ g("wind-progress").setAttribute("aria-valuenow",String(n));
+ g("wind-progress-fill").style.width=(n/73*100)+"%";
+}
+function src(reg,h){
+ const m=verified(reg);
+ if(!m)throw Error("Model nije potvrđen");
+ if(m.previewPath&&m.previewHour===Number(h)){
+   return "./"+m.previewPath+"?model="+encodeURIComponent(m.modelUtc)+"&h="+h;
+ }
+ return "https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?model="+encodeURIComponent(m.modelUtc);
+}
 function preload(reg,h){
- let k=src(reg,h);if(cache.has(k))return cache.get(k);
- let p=new Promise((resolve,reject)=>{const i=new Image();let timeout=setTimeout(()=>reject(Error("DHMZ ne odgovara")),14000);i.onload=()=>{clearTimeout(timeout);resolve(i)};i.onerror=()=>{clearTimeout(timeout);reject(Error("Karta nije dostupna"))};i.src=src(reg,h)});
- cache.set(k,p);p.catch(()=>{if(cache.get(k)===p)cache.delete(k)});if(cache.size>12)cache.delete(cache.keys().next().value);return p;
+ const k=src(reg,h);
+ if(cache.has(k))return cache.get(k);
+ const p=new Promise((resolve,reject)=>{
+   const image=new Image();
+   const timeout=setTimeout(()=>{image.onload=null;image.onerror=null;reject(Error("DHMZ ne odgovara"))},12000);
+   image.onload=()=>{clearTimeout(timeout);markLoaded(reg,h);resolve(image)};
+   image.onerror=()=>{clearTimeout(timeout);reject(Error("Karta nije dostupna"))};
+   image.src=k;
+ });
+ cache.set(k,p);
+ p.catch(()=>{if(cache.get(k)===p)cache.delete(k)});
+ // Limit decoded images, while the service worker retains all successful frames.
+ if(cache.size>18)cache.delete(cache.keys().next().value);
+ return p;
+}
+function prioritizeHours(anchor){
+ const hours=Array.from({length:73},(_,i)=>i);
+ // Immediately prioritize nearby animation frames; thereafter fill the whole model.
+ return hours.sort((a,b)=>Math.abs(a-anchor)-Math.abs(b-anchor)||a-b);
+}
+function preloadRemaining(reg,anchor){
+ const key=modelKey(reg),generation=++preloadGeneration;
+ if(!key)return;
+ const hours=prioritizeHours(anchor);
+ const workers=2;
+ const run=async()=>{
+   let index=0;
+   async function worker(){
+     while(index<hours.length&&generation===preloadGeneration&&modelKey(reg)===key&&reg===display){
+       if(document.hidden||activeSection!=="wind")return;
+       const n=hours[index++];
+       if(loadedByModel.get(key)?.has(n))continue;
+       try{await preload(reg,n)}catch{}
+       // Yield between network loads to keep scrolling and map interaction responsive.
+       await new Promise(resolve=>setTimeout(resolve,35));
+     }
+   }
+   await Promise.all(Array.from({length:workers},()=>worker()));
+ };
+ setTimeout(run,150);
+}
+function loadCacheProgress(){
+ const model=verified(display);
+ if(!model||!navigator.serviceWorker?.controller)return;
+ const channel=new MessageChannel();
+ const key=modelKey(display);
+ channel.port1.onmessage=event=>{
+   if(modelKey(display)!==key)return;
+   const existing=loadedByModel.get(key)||new Set();
+   for(const n of event.data?.hours||[])if(Number.isInteger(n)&&n>=0&&n<=72)existing.add(n);
+   loadedByModel.set(key,existing);
+   progressUpdate();
+ };
+ navigator.serviceWorker.controller.postMessage({type:"LIST_FRAMES",region:display,model:model.modelUtc},[channel.port2]);
 }
 async function show(h){
  if(!display)return;
  let seq=++pending,reg=display,n=Math.min(72,Math.max(0,Number(h)));hour=n;sl.value=n;g("hour").textContent="+"+n+" h";updateWindTitle();
  const m=verified(reg);if(!m){stop();draw();return}
  g("date").textContent=fmt.format(new Date(Date.parse(m.modelUtc)+n*3600000));g("loading").classList.remove("hidden");busy=true;
- try{let loaded=await preload(reg,n);if(seq!==pending||display!==reg)return;img.src=loaded.src;img.classList.remove("hidden");g("empty").classList.add("hidden");if(n<72)preload(reg,n+1).catch(()=>{})}
+ try{let loaded=await preload(reg,n);if(seq!==pending||display!==reg)return;img.src=loaded.src;img.classList.remove("hidden");g("empty").classList.add("hidden");if(!reportedFirst){reportedFirst=true;g("status").dataset.firstMapMs=String(Math.round(performance.now()-startupStarted));}preloadRemaining(reg,n);}
  catch(e){if(seq===pending){stop();blank("Preuzimanje nije uspjelo. Pritisnite Osvježi. "+e.message)}}
  finally{if(seq===pending){busy=false;g("loading").classList.add("hidden")}}
 }
 function draw(){
- stop();pending++;busy=false;g("warning").classList.add("hidden");zoomTo(1);blank("Učitavam provjerenu kartu…");
+ stop();pending++;busy=false;preloadGeneration++;g("warning").classList.add("hidden");zoomTo(1);blank("Učitavam prognozu…");
  let actual=selected,m=verified(actual);
  if(!m&&selected!=="HRv8"&&verified("HRv8")){actual="HRv8";m=verified(actual);g("warning").textContent="DHMZ nema svježu regionalnu kartu za "+regs.find(x=>x[0]===selected)[1]+". Prikazana je aktualna karta cijele Hrvatske.";g("warning").classList.remove("hidden")}
- if(!m){display="";g("status").textContent="Svježa prognoza nije dostupna";g("meta").textContent="Bez starih podataka";blank("Trenutačno nema provjerene nove DHMZ karte. Stare karte ne prikazujem.");return}
- display=actual;g("status").textContent="Aktualni model · "+regs.find(x=>x[0]===actual)[1];g("meta").textContent="Model "+fmt.format(new Date(m.modelUtc))+" · provjera "+fmt.format(new Date(m.checkedAt));controls(true);show(Math.min(72,Math.max(0,Math.round((Date.now()-Date.parse(m.modelUtc))/3600000))));
+ if(!m){display="";g("status").textContent="Prognoza nije dostupna";g("meta").textContent="";blank("Prognoza nije dostupna.");progressUpdate();return}
+ display=actual;g("status").textContent="Aktualni model · "+regs.find(x=>x[0]===actual)[1];g("meta").textContent="Model "+fmt.format(new Date(m.modelUtc))+" · provjera "+fmt.format(new Date(m.checkedAt));controls(true);progressUpdate();loadCacheProgress();show(Math.min(72,Math.max(0,Math.round((Date.now()-Date.parse(m.modelUtc))/3600000))));
 }
 async function refresh(){
   const call=++refreshSequence;
   lastFetch=Date.now();
   g("refresh").disabled=true;
-  if(!display){g("status").textContent="Provjeravam posljednji DHMZ model…";noNewForecastYet();}
+  if(!display){g("status").textContent="Provjera prognoze…";noNewForecastYet();}
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
   try{
     const response=await fetch("./data/manifest.json?check="+Date.now(),{cache:"no-store",signal:controller.signal});
@@ -124,7 +206,7 @@ async function refresh(){
       return;
     }
     // A different or expired model must never reuse the old frame.
-    if(prevModel!==current?.modelUtc)cache.clear();
+    if(prevModel!==current?.modelUtc){cache.clear();preloadGeneration++;}
     draw();
   }catch(error){
     if(call!==refreshSequence)return;
@@ -135,11 +217,11 @@ async function refresh(){
       stop();pending++;display="";data=null;cache.clear();
       g("status").textContent="Nije moguće potvrditi aktualnost prognoze";
       g("meta").textContent="Provjera nije dostupna";
-      blank("Svježi prognostički podaci nisu potvrđeni. Stari model nije prikazan.");
+      blank("Prognoza trenutačno nije dostupna.");progressUpdate();
     }
   }finally{clearTimeout(timeout);if(call===refreshSequence)g("refresh").disabled=false}
 }
-function noNewForecastYet(){g("meta").textContent="Provjeravam samo metapodatke";blank("Provjera DHMZ modela…")}
+function noNewForecastYet(){g("meta").textContent="";blank("Učitavam prognozu…")}
 function restoreForecast(){
  try{
   const saved=JSON.parse(localStorage.getItem("adriatic-current-model")||"null");
@@ -171,7 +253,7 @@ function chooseSection(section){
  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("hidden",v.id!==section));
  if(section==="nauticari"||section==="pomorci")loadForecast(section);
  if(section==="radar")radarLoad(false);
- if(section==="wind"&&Date.now()-lastFetch>60000)refresh();
+ if(section==="wind"){if(Date.now()-lastFetch>60000)refresh();else if(display)preloadRemaining(display,hour);}
 }
 async function loadForecast(section){
  if(!forecastFetch)forecastFetch=fetch("./data/texts.json?check="+Date.now(),{cache:"no-store"}).then(async r=>{if(!r.ok)throw Error("Izvor nije dostupan");return r.json()}).catch(()=>null).finally(()=>{forecastFetch=null});
@@ -292,11 +374,11 @@ radarView.addEventListener("pointerup",radarPointerEnd);radarView.addEventListen
 radarView.addEventListener("dblclick",()=>radarZoomTo(radarZoom===1?2:1));
 setInterval(()=>{if(activeSection==="radar"&&Date.now()-radarLastRequest>5*60000)radarLoad(true)},60000);
 if("serviceWorker" in navigator){
- navigator.serviceWorker.register("./sw.js",{scope:"./"}).then(()=>{if(data)notifyCacheModels()}).catch(()=>{});
+ navigator.serviceWorker.register("./sw.js",{scope:"./"}).then(()=>{if(data)notifyCacheModels();if(display)loadCacheProgress()}).catch(()=>{});
 }
 restoreForecast();
 refresh();
 
-document.addEventListener("visibilitychange",()=>{if(!document.hidden){activeData=null;if(activeSection==="wind")refresh();else if(activeSection==="radar")radarLoad(Date.now()-radarLastRequest>5*60000);else if(activeSection==="nauticari"||activeSection==="pomorci")loadForecast(activeSection)}});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){activeData=null;if(activeSection==="wind"){refresh();if(display)preloadRemaining(display,hour);}else if(activeSection==="radar")radarLoad(Date.now()-radarLastRequest>5*60000);else if(activeSection==="nauticari"||activeSection==="pomorci")loadForecast(activeSection)}});
 })();
 </script></body></html>
