@@ -7,6 +7,9 @@ from PIL import Image,ImageOps,ImageEnhance
 import pytesseract
 
 REGIONS=("MASL","SENJ","SPLI","DUBR","HRv8")
+# A verified 00 UTC run may still be the newest published chart after 08 UTC.
+# Allow a clearly timestamped latest-source model for up to 16 h; never invent a new run.
+MAX_MODEL_AGE_HOURS = 16
 DEST=Path(__file__).resolve().parents[1]/"web"/"data"/"manifest.json"
 ASSETS=DEST.parent
 def get_frame(region,hour):
@@ -39,7 +42,7 @@ def check(region,now):
     if not times:raise ValueError("START MODELA timestamp not verified: "+repr(txt[:220]))
     model=times[0]
     age=now-model
-    status="current" if timedelta(hours=-1)<=age<=timedelta(hours=8) else "stale"
+    status="current" if timedelta(hours=-1)<=age<=timedelta(hours=MAX_MODEL_AGE_HOURS) else "stale"
     return {"status":status,"modelUtc":iso(model),"checkedAt":iso(now)}
 def main():
     now=datetime.now(timezone.utc)
@@ -67,7 +70,7 @@ def main():
         except Exception as e:
             regs[region]={"status":"unavailable","checkedAt":iso(now)}
             print(region,"unavailable",str(e)[:150])
-    manifest={"generatedAt":iso(now),"source":"DHMZ ALADIN/HR","maxModelAgeHours":8,"regions":regs}
+    manifest={"generatedAt":iso(now),"source":"DHMZ ALADIN/HR","maxModelAgeHours":MAX_MODEL_AGE_HOURS,"regions":regs}
     DEST.parent.mkdir(parents=True,exist_ok=True)
     DEST.write_text(json.dumps(manifest,indent=2,ensure_ascii=False)+"\n")
 if __name__=="__main__":main()

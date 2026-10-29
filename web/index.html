@@ -8,7 +8,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:9px;mar
 button{border:1px solid var(--border);background:var(--box);color:var(--text);border-radius:12px;font:inherit;font-weight:600;padding:10px 13px;cursor:pointer}button:disabled{opacity:.4}
 button.primary{background:var(--accent);color:#042333;border-color:var(--accent)}.tabs{display:flex;gap:7px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}.tabs button{white-space:nowrap;flex-shrink:0;font-size:13px}.tabs button[aria-selected=true]{border-color:var(--accent);background:var(--soft);color:var(--accent)}
 section{background:var(--box);border:1px solid var(--border);border-radius:16px;overflow:hidden}.status{padding:12px 13px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-bottom:1px solid var(--border);font-size:13px}.status small{color:var(--muted)}#warning{background:var(--soft);padding:10px 13px;font-size:13px}
-.hidden{display:none!important}.map{min-height:320px;display:grid;place-items:center;position:relative;background:#fff}.map img{width:100%;max-width:760px;display:block;object-fit:contain}.empty{background:var(--bg);padding:24px 18px;max-width:330px;color:var(--muted);line-height:1.5;text-align:center;border-radius:12px}.loading{position:absolute;inset:0;display:grid;place-items:center;background:#0006;color:#fff;font-weight:650}
+.hidden{display:none!important}.map{min-height:320px;display:grid;place-items:center;position:relative;background:#fff}.map img{width:100%;max-width:760px;display:block;object-fit:contain}.map:has(img.hidden){min-height:240px}.empty{background:var(--bg);padding:24px 18px;max-width:330px;color:var(--muted);line-height:1.5;text-align:center;border-radius:12px}.loading{position:absolute;inset:0;display:grid;place-items:center;background:#0006;color:#fff;font-weight:650}
 .controls{padding:13px}.time{display:flex;align-items:center;justify-content:space-between;gap:12px}.time strong{font-size:21px}.time span{font-size:13px;color:var(--muted)}
 input[type=range]{width:100%;margin:15px 0;accent-color:var(--accent)}.quick,.actions{display:flex;flex-wrap:wrap;gap:7px}.quick button{flex:1;font-size:12px;padding:8px 9px}.actions{margin-top:14px}
 footer{font-size:12px;color:var(--muted);margin:15px 4px;line-height:1.6}footer a{color:var(--accent)}
@@ -86,7 +86,7 @@ function blank(text){g("date").textContent="—";img.removeAttribute("src");img.
 function verified(key){
  let m=data&&data.regions&&data.regions[key];if(!m||m.status!=="current"||!m.modelUtc||!m.checkedAt)return null;
  let age=Date.now()-Date.parse(m.modelUtc),checked=Date.now()-Date.parse(m.checkedAt);
- return age>=-3600000&&age<=28800000&&checked>=-300000&&checked<=28800000?m:null;
+ return age>=-3600000&&age<=Math.min(16,Number(data.maxModelAgeHours)||16)*3600000&&checked>=-300000&&checked<=14400000?m:null;
 }
 function modelKey(reg){
  const m=verified(reg);
@@ -117,12 +117,19 @@ function src(reg,h){
 function preload(reg,h,priority="high"){
  const k=src(reg,h);
  if(cache.has(k))return cache.get(k);
+ const fallback="https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?model="+encodeURIComponent(verified(reg).modelUtc)+"&retry="+Date.now();
+ const urls=k.startsWith("./")?[k,fallback]:[k];
  const p=new Promise((resolve,reject)=>{
-   const image=new Image();image.fetchPriority=priority;
-   const timeout=setTimeout(()=>{image.onload=null;image.onerror=null;reject(Error("DHMZ ne odgovara"))},12000);
-   image.onload=()=>{clearTimeout(timeout);markLoaded(reg,h);resolve(image)};
-   image.onerror=()=>{clearTimeout(timeout);reject(Error("Karta nije dostupna"))};
-   image.src=k;
+   let attempt=0;
+   function tryNext(){
+     if(attempt>=urls.length){reject(Error("Karta nije dostupna"));return}
+     const image=new Image();image.fetchPriority=priority;
+     const timeout=setTimeout(()=>{image.onload=null;image.onerror=null;tryNext()},12000);
+     image.onload=()=>{clearTimeout(timeout);markLoaded(reg,h);resolve(image)};
+     image.onerror=()=>{clearTimeout(timeout);tryNext()};
+     image.src=urls[attempt++];
+   }
+   tryNext();
  });
  cache.set(k,p);
  p.catch(()=>{if(cache.get(k)===p)cache.delete(k)});
@@ -193,14 +200,13 @@ async function refresh(){
   if(!display){g("status").textContent="Provjera prognoze…";noNewForecastYet();}
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
   try{
-    const response=await fetch("./data/manifest.json",{cache:"no-cache",signal:controller.signal});
+    const response=await fetch("./data/manifest.json?startup="+Date.now()+"-"+call,{cache:"no-store",signal:controller.signal,headers:{"Cache-Control":"no-cache"}});
     if(!response.ok)throw Error("Provjera nije dostupna");
     const next=await response.json();
     if(!next.generatedAt||!next.regions)throw Error("Nedostaju podaci o modelu");
     if(call!==refreshSequence)return;
     const prevModel=display?data?.regions?.[display]?.modelUtc:null;
     data=next;
-    try{localStorage.setItem("adriatic-current-model",JSON.stringify(next))}catch{}
     const current=display?verified(display):null;
     notifyCacheModels();
     if(display&&current&&prevModel===current.modelUtc&&!img.classList.contains("hidden")){
@@ -453,7 +459,7 @@ setInterval(()=>{if(activeSection==="radar"&&Date.now()-radarLastRequest>5*60000
 if("serviceWorker" in navigator){
  navigator.serviceWorker.register("./sw.js",{scope:"./"}).then(()=>{if(data)notifyCacheModels();if(display)loadCacheProgress()}).catch(()=>{});
 }
-restoreForecast();
+try{localStorage.removeItem("adriatic-current-model")}catch{}
 refresh();
 
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){activeData=null;if(activeSection==="wind"){refresh();if(display)preloadRemaining(display,hour);}else if(activeSection==="radar")radarLoad(Date.now()-radarLastRequest>5*60000);else if(activeSection==="nauticari"||activeSection==="pomorci")loadForecast(activeSection)}});

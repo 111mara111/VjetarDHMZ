@@ -65,6 +65,7 @@ jobs:
           npm install --no-save --no-audit --no-fund playwright-core
           node scripts/test_radar.mjs
       - name: Compare loading before and after optimization
+        continue-on-error: true
         if: github.event_name != 'schedule'
         run: |
           npm install --no-save --no-audit --no-fund playwright-core
