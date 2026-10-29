@@ -38,6 +38,11 @@ try{
       const el=document.querySelector("#image");
       return Boolean(el&&!el.classList.contains("hidden")&&el.complete&&el.naturalWidth>0);
     },{},{timeout:22000});
+    if(kind==="after"){
+      const startState=await page.evaluate(()=>({hour:document.getElementById("hour")?.textContent,slider:document.getElementById("slider")?.value,date:document.getElementById("date")?.textContent}));
+      if(startState.hour!=="+0 h"||startState.slider!=="0")throw Error("Wind must start at +0 h: "+JSON.stringify(startState));
+      console.log("WIND_START_ZERO_PASS",JSON.stringify(startState));
+    }
     const elapsed=Math.round(performance.now()-started);
     measurements[kind].push(elapsed);
     console.log("BROWSER",kind,i+1,elapsed,"ms",JSON.stringify(await page.evaluate(()=>({status:document.querySelector("#status")?.textContent,progress:document.querySelector("#loadinfo")?.textContent||null}))));

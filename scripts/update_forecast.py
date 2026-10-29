@@ -51,8 +51,8 @@ def main():
         try:
             regs[region]=check(region,now)
             if regs[region]["status"]=="current":
-                model=datetime.fromisoformat(regs[region]["modelUtc"].replace("Z","+00:00"))
-                preview_hour=max(0,min(72,round((now-model).total_seconds()/3600)))
+                # The UI always opens at +0 h. Generate a fast preview for that exact frame.
+                preview_hour=0
                 try:
                     blob=get_frame(region,preview_hour)
                     ASSETS.mkdir(parents=True,exist_ok=True)
