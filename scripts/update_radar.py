@@ -2,7 +2,7 @@
 """Check official DHMZ radar image freshness by the measurement timestamp on the image.
 Do not infer freshness from HTTP fetch time.
 """
-import io,json,re,urllib.request,time
+import io,json,re,urllib.request,time,shutil,hashlib
 from pathlib import Path
 from datetime import datetime,timedelta,timezone
 from zoneinfo import ZoneInfo
@@ -12,6 +12,7 @@ import pytesseract
 OUT=Path(__file__).resolve().parents[1]/"web"/"data"/"radar.json"
 SNAPSHOT=OUT.parent/"radar-latest.png"
 ANIMATION=OUT.parent/"radar-animation.gif"
+FRAME_DIR=OUT.parent/"radar-frames"
 TZ=ZoneInfo("Europe/Zagreb")
 def iso(d):return d.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00","Z")
 def download():
@@ -26,7 +27,7 @@ def download():
 def parse_time(image,now):
  w,h=image.size
  candidates=[]
- for crop in [image.crop((0,0,w,min(h,80))),image.crop((0,0,w,h))]:
+ for crop in [image.crop((0,0,min(w,400),min(h,25))),image.crop((0,0,w,min(h,80)))]:
   mono=ImageEnhance.Contrast(ImageOps.grayscale(crop)).enhance(2)
   mono=mono.resize((mono.width*2,mono.height*2))
   txt=pytesseract.image_to_string(mono,config="--psm 6")
@@ -36,6 +37,7 @@ def parse_time(image,now):
     reading=datetime(year,month,day,hour,minute,tzinfo=TZ).astimezone(timezone.utc)
     if abs((now-reading).total_seconds())<3600*24*365:candidates.append(reading)
    except ValueError:pass
+  if candidates:break
  if not candidates:raise ValueError("Cannot verify radar image timestamp")
  return max(candidates)
 def main():
@@ -50,11 +52,27 @@ def main():
    SNAPSHOT.parent.mkdir(parents=True,exist_ok=True)
    img.save(SNAPSHOT,format="PNG",optimize=True)
    ANIMATION.write_bytes(animation_blob)
+   if FRAME_DIR.exists():shutil.rmtree(FRAME_DIR)
+   FRAME_DIR.mkdir(parents=True)
+   timeline=[]
+   version=hashlib.sha256(animation_blob).hexdigest()[:12]
+   with Image.open(io.BytesIO(animation_blob)) as animation:
+    for i in range(nframes):
+     animation.seek(i)
+     frame=animation.convert("RGB")
+     name=f"{version}-{i:03d}.png"
+     frame.save(FRAME_DIR/name,format="PNG",optimize=True)
+     entry={"path":"data/radar-frames/"+name}
+     try:entry["measuredUtc"]=iso(parse_time(frame,now))
+     except ValueError:pass  # Never invent a timestamp from frame number or download time.
+     timeline.append(entry)
+   output["timeline"]=timeline
   print("radar",output)
  except Exception as e:print("radar unavailable:",type(e).__name__,str(e)[:200])
  if output["status"]!="current":
   if SNAPSHOT.exists():SNAPSHOT.unlink()
   if ANIMATION.exists():ANIMATION.unlink()
+  if FRAME_DIR.exists():shutil.rmtree(FRAME_DIR)
  OUT.parent.mkdir(parents=True,exist_ok=True)
  OUT.write_text(json.dumps(output,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
 if __name__=="__main__":main()
