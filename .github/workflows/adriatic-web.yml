@@ -6,6 +6,7 @@ on:
       - 'web/**'
       - 'scripts/update_forecast.py'
       - 'scripts/benchmark_first_frame.py'
+      - 'scripts/benchmark_browser.mjs'
       - 'scripts/update_text_forecasts.py'
       - 'scripts/update_radar.py'
       - '.github/workflows/adriatic-web.yml'
@@ -27,6 +28,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -45,3 +48,8 @@ jobs:
       - name: Measure cold first-image transfer (direct DHMZ versus optimized preview)
         continue-on-error: true
         run: python scripts/benchmark_first_frame.py
+      - name: Benchmark actual first visible wind image in headless Chrome
+        continue-on-error: true
+        run: |
+          npm install --no-save --no-audit --no-fund playwright-core
+          node scripts/benchmark_browser.mjs
