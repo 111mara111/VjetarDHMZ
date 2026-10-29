@@ -30,5 +30,12 @@ try{
  await page.waitForFunction(()=>{const el=document.querySelector("#radar-image");return el&&!el.classList.contains("hidden")&&el.naturalWidth>0},{},{timeout:15000});
  const visible=await page.evaluate(()=>({src:document.querySelector("#radar-image")?.getAttribute("src"),text:document.querySelector("#radar-time")?.textContent,slider:document.querySelector("#radar-slider")?.disabled,windOverlay:document.querySelector("#wind-map-time")!==null,belowTime:document.querySelector("#date")!==null,ageNote:document.querySelector("#radar-info")?.textContent}));
  if(!visible.src||visible.slider||visible.windOverlay||!visible.belowTime)throw Error("UI regression: "+JSON.stringify(visible));
+ const before=await page.evaluate(()=>({src:document.getElementById("radar-image").src,label:document.getElementById("radar-map-time").textContent,count:Number(document.getElementById("radar-slider").max)+1,position:document.getElementById("radar-viewport").getBoundingClientRect().bottom,sliderTop:document.getElementById("radar-slider").getBoundingClientRect().top}));
+ if(before.count<2||before.sliderTop<=before.position||before.sliderTop-before.position>115)throw Error("Radar slider must be enabled immediately beneath map: "+JSON.stringify(before));
+ await page.evaluate(()=>{const s=document.getElementById("radar-slider");s.value="0";s.dispatchEvent(new Event("input",{bubbles:true}))});
+ await page.waitForFunction(previous=>{const img=document.getElementById("radar-image"),s=document.getElementById("radar-slider");return Number(s.value)===0&&img.complete&&img.naturalWidth>0&&img.src!==previous},before.src,{timeout:15000});
+ const after=await page.evaluate(()=>({src:document.getElementById("radar-image").src,time:document.getElementById("radar-map-time").textContent,position:document.getElementById("radar-position").textContent,sliderValue:document.getElementById("radar-slider").value}));
+ if(after.time===before.label||after.sliderValue!=="0"||!after.position.startsWith("1 /"))throw Error("Manual scrub didn't change frame/time: "+JSON.stringify({before,after}));
+ console.log("RADAR_SLIDER_PASS",JSON.stringify({count:before.count,below_image_px:Math.round(before.sliderTop-before.position),before_time:before.label,after_time:after.time,changed_image:after.src!==before.src}));
  console.log("RADAR_TEST_PASS",JSON.stringify({first_frame_ms:Date.now()-start,...visible}));
 }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve))}

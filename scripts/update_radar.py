@@ -49,7 +49,10 @@ def main():
   measured=parse_time(img,now)
   age=now-measured
   output.update({"status":"current" if timedelta(minutes=-5)<=age<=timedelta(minutes=35) else "stale","measuredUtc":iso(measured),"frames":nframes})
-  if output["status"]=="current":
+  # Make individually timestamped frames available for scrubbing, even if
+  # source publication is late; the UI labels images older than 35 min.
+  # Never substitute an old local GIF if the source cannot be verified.
+  if timedelta(minutes=-5)<=age<=timedelta(hours=2):
    SNAPSHOT.parent.mkdir(parents=True,exist_ok=True)
    img.save(SNAPSHOT,format="PNG",optimize=True)
    img.save(PREVIEW,format="WEBP",quality=84,method=4)
@@ -78,7 +81,7 @@ def main():
    output["timeline"]=timeline
   print("radar",output)
  except Exception as e:print("radar unavailable:",type(e).__name__,str(e)[:200])
- if output["status"]!="current":
+ if not output.get("timeline"):
   if SNAPSHOT.exists():SNAPSHOT.unlink()
   if PREVIEW.exists():PREVIEW.unlink()
   if ANIMATION.exists():ANIMATION.unlink()
