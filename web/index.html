@@ -1,4 +1,4 @@
-<!doctype html><html lang="hr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0c1c2e"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Vjetar Jadran"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml"><title>Vjetar Jadran</title>
+<!doctype html><html lang="hr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0c1c2e"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Vjetar Jadran"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="preconnect" href="https://prognoza.hr"><title>Vjetar Jadran</title>
 <style>
 :root{color-scheme:light dark;--bg:#f2f6fa;--box:#fff;--text:#102638;--muted:#526a7c;--border:#d3e0ec;--accent:#0787be;--soft:#def2ff}
 @media(prefers-color-scheme:dark){:root{--bg:#091522;--box:#14283a;--text:#f3f8ff;--muted:#adc3d3;--border:#355064;--accent:#65d6ff;--soft:#15374e}}
@@ -110,15 +110,15 @@ function src(reg,h){
  const m=verified(reg);
  if(!m)throw Error("Model nije potvrđen");
  if(m.previewPath&&m.previewHour===Number(h)){
-   return "./"+m.previewPath+"?model="+encodeURIComponent(m.modelUtc)+"&h="+h;
+   return "./"+(m.previewWebpPath||m.previewPath)+"?model="+encodeURIComponent(m.modelUtc)+"&h="+h;
  }
  return "https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?model="+encodeURIComponent(m.modelUtc);
 }
-function preload(reg,h){
+function preload(reg,h,priority="high"){
  const k=src(reg,h);
  if(cache.has(k))return cache.get(k);
  const p=new Promise((resolve,reject)=>{
-   const image=new Image();
+   const image=new Image();image.fetchPriority=priority;
    const timeout=setTimeout(()=>{image.onload=null;image.onerror=null;reject(Error("DHMZ ne odgovara"))},12000);
    image.onload=()=>{clearTimeout(timeout);markLoaded(reg,h);resolve(image)};
    image.onerror=()=>{clearTimeout(timeout);reject(Error("Karta nije dostupna"))};
@@ -139,7 +139,7 @@ function preloadRemaining(reg,anchor){
  const key=modelKey(reg),generation=++preloadGeneration;
  if(!key)return;
  const hours=prioritizeHours(anchor);
- const workers=2;
+ const workers=navigator.connection?.saveData?2:4;
  const run=async()=>{
    let index=0;
    async function worker(){
@@ -147,9 +147,9 @@ function preloadRemaining(reg,anchor){
        if(document.hidden||activeSection!=="wind")return;
        const n=hours[index++];
        if(loadedByModel.get(key)?.has(n))continue;
-       try{await preload(reg,n)}catch{}
+       try{await preload(reg,n,"low")}catch{}
        // Yield between network loads to keep scrolling and map interaction responsive.
-       await new Promise(resolve=>setTimeout(resolve,35));
+       await new Promise(resolve=>setTimeout(resolve,16));
      }
    }
    await Promise.all(Array.from({length:workers},()=>worker()));
@@ -193,7 +193,7 @@ async function refresh(){
   if(!display){g("status").textContent="Provjera prognoze…";noNewForecastYet();}
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
   try{
-    const response=await fetch("./data/manifest.json?check="+Date.now(),{cache:"no-store",signal:controller.signal});
+    const response=await fetch("./data/manifest.json",{cache:"no-cache",signal:controller.signal});
     if(!response.ok)throw Error("Provjera nije dostupna");
     const next=await response.json();
     if(!next.generatedAt||!next.regions)throw Error("Nedostaju podaci o modelu");
@@ -305,11 +305,20 @@ function radarShow(index){
   clearTimeout(timeout);
   if(seq!==radarRequestId)return;
   radarIndex=n;radarSlider.value=String(n);radarImg.src=candidate.src;
-  radarImg.classList.remove("hidden");radarPlaceholder.classList.add("hidden");
+  radarImg.classList.remove("hidden");radarPlaceholder.classList.add("hidden");radarPrime(n);
   const label=radarTime(frame,n);g("radar-time").textContent=label;g("radar-map-time").textContent=label;g("radar-map-time").classList.remove("hidden");radarBusy=false;
  };
  candidate.onerror=()=>{clearTimeout(timeout);if(seq===radarRequestId){radarBusy=false;radarStop();}};
- candidate.src="./"+frame.path;
+ candidate.fetchPriority="high";candidate.src="./"+(frame.webpPath||frame.path);
+}
+const radarCache=new Map();
+function radarPrime(index){
+ // Two adjacent frames only: keep scrubbing quick without downloading all frames.
+ for(const n of [(index+1)%radarFrames.length,(index+2)%radarFrames.length]){
+  const f=radarFrames[n],url=f&&(f.webpPath||f.path);if(!url||radarCache.has(url))continue;
+  const image=new Image();image.fetchPriority="low";image.src="./"+url;radarCache.set(url,image);
+ }
+ while(radarCache.size>6)radarCache.delete(radarCache.keys().next().value);
 }
 function radarStart(){
  radarStop();if(radarFrames.length<2)return;
@@ -320,7 +329,7 @@ async function radarLoad(force){
  if(!force&&radarFrames.length&&Date.now()-radarLastRequest<5*60000){if(radarMode==="animation")radarStart();return;}
  radarLastRequest=Date.now();radarStop();const seq=++radarRequestId;
  try{
-  const res=await fetch("./data/radar.json?check="+Date.now(),{cache:"no-store",signal:AbortSignal.timeout(12000)});
+  const res=await fetch("./data/radar.json",{cache:"no-cache",signal:AbortSignal.timeout(12000)});
   if(!res.ok)throw Error("Radar");const metadata=await res.json();if(seq!==radarRequestId)return;
   const age=Date.now()-Date.parse(metadata.measuredUtc);
   if(metadata.status!=="current"||age< -300000||age>35*60000||!metadata.timeline?.length)throw Error("Radar");

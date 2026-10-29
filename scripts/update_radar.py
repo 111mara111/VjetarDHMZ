@@ -55,14 +55,20 @@ def main():
    if FRAME_DIR.exists():shutil.rmtree(FRAME_DIR)
    FRAME_DIR.mkdir(parents=True)
    timeline=[]
+   encoded={}
    version=hashlib.sha256(animation_blob).hexdigest()[:12]
    with Image.open(io.BytesIO(animation_blob)) as animation:
     for i in range(nframes):
      animation.seek(i)
      frame=animation.convert("RGB")
-     name=f"{version}-{i:03d}.png"
-     frame.save(FRAME_DIR/name,format="PNG",optimize=True)
-     entry={"path":"data/radar-frames/"+name}
+     digest=hashlib.sha256(frame.tobytes()).hexdigest()
+     if digest not in encoded:
+      name=f"{version}-{i:03d}"
+      frame.save(FRAME_DIR/(name+".png"),format="PNG",optimize=True)
+      frame.save(FRAME_DIR/(name+".webp"),format="WEBP",lossless=True,method=4)
+      encoded[digest]=name
+     name=encoded[digest]
+     entry={"path":"data/radar-frames/"+name+".png","webpPath":"data/radar-frames/"+name+".webp"}
      try:entry["measuredUtc"]=iso(parse_time(frame,now))
      except ValueError:pass  # Never invent a timestamp from frame number or download time.
      timeline.append(entry)

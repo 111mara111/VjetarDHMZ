@@ -7,6 +7,7 @@ on:
       - 'scripts/update_forecast.py'
       - 'scripts/benchmark_first_frame.py'
       - 'scripts/benchmark_browser.mjs'
+      - 'scripts/benchmark_loading.mjs'
       - 'scripts/update_text_forecasts.py'
       - 'scripts/update_radar.py'
       - '.github/workflows/adriatic-web.yml'
@@ -53,3 +54,15 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund playwright-core
           node scripts/benchmark_browser.mjs
+
+      - name: Compare loading before and after optimization
+        if: github.event_name != 'schedule'
+        run: |
+          npm install --no-save --no-audit --no-fund playwright-core
+          node scripts/benchmark_loading.mjs
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'schedule' && always()
+        with:
+          name: loading-comparison
+          path: benchmark-results/
+          if-no-files-found: ignore

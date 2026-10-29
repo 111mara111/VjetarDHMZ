@@ -54,6 +54,10 @@ def main():
                     blob=get_frame(region,preview_hour)
                     ASSETS.mkdir(parents=True,exist_ok=True)
                     (ASSETS/("wind_"+region+".png")).write_bytes(blob)
+                    webp_name="wind_"+region+".webp"
+                    with Image.open(io.BytesIO(blob)) as preview:
+                        preview.save(ASSETS/webp_name,format="WEBP",lossless=True,method=4)
+                    regs[region]["previewWebpPath"]="data/"+webp_name
                     regs[region]["previewHour"]=preview_hour
                     regs[region]["previewPath"]="data/wind_"+region+".png"
                     print("FAST_PREVIEW",region,preview_hour,len(blob))
