@@ -8,7 +8,7 @@ const refs={earlier:'1f16cb1d341708ef05b2e2593ea51010e781ee36',before:'4cd63bb19
 const html=Object.fromEntries(Object.entries(refs).map(([k,v])=>[k,execFileSync('git',['show',v+':web/index.html'],{encoding:'utf8'})]));
 html.after=fs.readFileSync('web/index.html','utf8');
 const root=path.resolve('web'),manifest=JSON.parse(fs.readFileSync('web/data/manifest.json'));
-if(manifest.regions.MASL.status!=='current'||!manifest.regions.MASL.previewPath){console.log('BENCHMARK_SKIPPED: DHMZ has no recent verified wind preview');process.exit(0)}
+if(manifest.regions?.MASL?.status!=='current'||!manifest.regions?.MASL?.previewPath){console.log('BENCHMARK_SKIPPED: DHMZ has no recent verified wind preview');process.exit(0)}
 const radar=JSON.parse(fs.readFileSync('web/data/radar.json'));
 if(radar.status!=='current'||!radar.timeline?.length){console.log('BENCHMARK_SKIPPED: DHMZ radar unavailable');process.exit(0)}
 const mime={'.html':'text/html; charset=utf-8','.json':'application/json','.png':'image/png','.webp':'image/webp','.gif':'image/gif','.js':'application/javascript'};
