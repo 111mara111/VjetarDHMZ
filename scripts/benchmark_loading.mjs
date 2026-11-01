@@ -47,16 +47,22 @@ try{
    }
   }finally{await context.close();}
  }
- // One cold pass per variant: full 73 frames include actual external DHMZ network.
- const full=[];
+ // Measure the first few useful frames; loading all 73 is intentionally removed.
+ const nearby=[];
  for(const variant of ['before','after']){
-  const {context,page}=await setup();const start=performance.now();
-  try{await page.goto(base+'/'+variant+'.html',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.getElementById('wind-progress').getAttribute('aria-valuenow')==='73',null,{timeout:180000});full.push({variant,all73_ms:Math.round(performance.now()-start)});console.log('LOAD_ALL73',JSON.stringify(full.at(-1)));}
-  catch(e){full.push({variant,error:String(e.message).slice(0,120)});console.log('LOAD_ALL73',JSON.stringify(full.at(-1)));}
-  finally{await context.close();}
+  const {context,page}=await setup(),start=performance.now();
+  try{
+   await page.goto(base+'/'+variant+'.html',{waitUntil:'domcontentloaded'});
+   await page.waitForFunction(()=>Number(document.getElementById('wind-progress')?.getAttribute('aria-valuenow')||0)>=4,null,{timeout:30000});
+   nearby.push({variant,first4_ms:Math.round(performance.now()-start)});
+   console.log('LOAD_FIRST4',JSON.stringify(nearby.at(-1)));
+  }catch(e){
+   nearby.push({variant,error:String(e.message).slice(0,150)});
+   console.log('LOAD_FIRST4',JSON.stringify(nearby.at(-1)));
+  }finally{await context.close()}
  }
  const median=a=>a.sort((a,b)=>a-b)[Math.floor(a.length/2)];
  const summary=Object.fromEntries(['earlier','before','after'].map(v=>[v,{wind_first_ms:median(samples.filter(x=>x.variant===v).map(x=>x.wind_first_ms)),radar_first_ms:median(samples.filter(x=>x.variant===v).map(x=>x.radar_first_ms))}]));
- const report={measuredAt:new Date().toISOString(),profile,source:'GitHub Actions Chrome, local HTTP serving real DHMZ images and live external DHMZ for remaining wind frames. Not a physical iPhone test.',refs,samples,medians:summary,all73:full};
+ const report={measuredAt:new Date().toISOString(),profile,source:'GitHub Actions Chrome, local HTTP serving real DHMZ images and live external DHMZ for remaining wind frames. Not a physical iPhone test.',refs,samples,medians:summary,first4:nearby};
  fs.mkdirSync('benchmark-results',{recursive:true});fs.writeFileSync('benchmark-results/loading.json',JSON.stringify(report,null,2));console.log('LOAD_RESULT',JSON.stringify(report));
 }finally{await browser.close();await new Promise(r=>server.close(r));}

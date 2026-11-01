@@ -13,6 +13,7 @@ on:
       - 'scripts/generate_apple_icons.py'
       - 'scripts/test_radar.mjs'
       - 'scripts/verify_publish.py'
+      - 'scripts/test_webkit.mjs'
       - '.github/workflows/adriatic-web.yml'
   schedule:
     - cron: '*/10 * * * *'
@@ -77,6 +78,13 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund playwright-core
           node scripts/test_radar.mjs
+      - name: WebKit mobile regression check
+        if: github.event_name != 'schedule'
+        continue-on-error: true
+        run: |
+          npm install --no-save --no-audit --no-fund playwright
+          npx playwright install --with-deps webkit
+          node scripts/test_webkit.mjs
       - name: Compare loading before and after optimization
         continue-on-error: true
         if: github.event_name != 'schedule'
