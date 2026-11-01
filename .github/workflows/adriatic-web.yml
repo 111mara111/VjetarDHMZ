@@ -12,6 +12,7 @@ on:
       - 'scripts/update_radar.py'
       - 'scripts/generate_apple_icons.py'
       - 'scripts/test_radar.mjs'
+      - 'scripts/verify_publish.py'
       - '.github/workflows/adriatic-web.yml'
   schedule:
     - cron: '*/10 * * * *'
@@ -40,9 +41,21 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq tesseract-ocr
           pip install --disable-pip-version-check pillow pytesseract beautifulsoup4
-      - run: python scripts/update_forecast.py
-      - run: python scripts/update_text_forecasts.py
-      - run: python scripts/update_radar.py
+      - name: Refresh DHMZ wind, radar and marine text independently
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/update_forecast.py > /tmp/dhmz-wind.log 2>&1 & WIND=$!
+          python scripts/update_text_forecasts.py > /tmp/dhmz-text.log 2>&1 & TEXT=$!
+          python scripts/update_radar.py > /tmp/dhmz-radar.log 2>&1 & RADAR=$!
+          FAIL=0
+          wait "$WIND" || FAIL=1
+          wait "$TEXT" || FAIL=1
+          wait "$RADAR" || FAIL=1
+          cat /tmp/dhmz-wind.log /tmp/dhmz-text.log /tmp/dhmz-radar.log
+          exit "$FAIL"
+      - name: Validate published data and report source health
+        run: python scripts/verify_publish.py
       - name: Generate iPhone / iPad Home Screen PNG icons
         run: python scripts/generate_apple_icons.py
       - uses: actions/configure-pages@v5

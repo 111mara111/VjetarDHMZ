@@ -77,7 +77,14 @@ def main():
      entry={"path":"data/radar-frames/"+name+".png","webpPath":"data/radar-frames/"+name+".webp"}
      try:entry["measuredUtc"]=iso(parse_time(frame,now))
      except ValueError:pass  # Never invent a timestamp from frame number or download time.
+     # Remove only consecutive *identical* images with identical timestamp.
+     # Same-looking radar at different measured times is still a valid time step.
+     if timeline and timeline[-1]["path"]==entry["path"] and timeline[-1].get("measuredUtc")==entry.get("measuredUtc"):
+      continue
      timeline.append(entry)
+   if not timeline:raise ValueError("No verified radar frames")
+   output["sourceFrames"]=nframes
+   output["frames"]=len(timeline)
    output["timeline"]=timeline
   print("radar",output)
  except Exception as e:print("radar unavailable:",type(e).__name__,str(e)[:200])

@@ -146,31 +146,20 @@ function preload(reg,h,priority="high"){
  if(cache.size>18)cache.delete(cache.keys().next().value);
  return p;
 }
-function prioritizeHours(anchor){
- const hours=Array.from({length:73},(_,i)=>i);
- // Immediately prioritize nearby animation frames; thereafter fill the whole model.
- return hours.sort((a,b)=>Math.abs(a-anchor)-Math.abs(b-anchor)||a-b);
-}
+// Fetch only nearby forecast frames, not all 73 on every opening.
 function preloadRemaining(reg,anchor){
  const key=modelKey(reg),generation=++preloadGeneration;
- if(!key)return;
- const hours=prioritizeHours(anchor);
- const workers=navigator.connection?.saveData?2:4;
+ if(!key||navigator.connection?.saveData||document.hidden||activeSection!=="wind")return;
+ const next=[anchor+1,anchor+2,anchor+3].filter(h=>h<=72);
  const run=async()=>{
-   let index=0;
-   async function worker(){
-     while(index<hours.length&&generation===preloadGeneration&&modelKey(reg)===key&&reg===display){
-       if(document.hidden||activeSection!=="wind")return;
-       const n=hours[index++];
-       if(loadedByModel.get(key)?.has(n))continue;
-       try{await preload(reg,n,"low")}catch{}
-       // Yield between network loads to keep scrolling and map interaction responsive.
-       await new Promise(resolve=>setTimeout(resolve,16));
-     }
+   for(const n of next){
+     if(generation!==preloadGeneration||modelKey(reg)!==key||display!==reg||document.hidden||activeSection!=="wind")return;
+     if(loadedByModel.get(key)?.has(n))continue;
+     try{await preload(reg,n,"low")}catch{}
+     await new Promise(resolve=>setTimeout(resolve,40));
    }
-   await Promise.all(Array.from({length:workers},()=>worker()));
  };
- setTimeout(run,150);
+ setTimeout(run,180);
 }
 function loadCacheProgress(){
  const model=verified(display);
@@ -240,17 +229,6 @@ async function refresh(){
   }finally{clearTimeout(timeout);if(call===refreshSequence)g("refresh").disabled=false}
 }
 function noNewForecastYet(){g("meta").textContent="";blank("Prognoza trenutačno nije dostupna.")}
-function restoreForecast(){
- try{
-  const saved=JSON.parse(localStorage.getItem("adriatic-current-model")||"null");
-  if(!saved?.regions||!saved.generatedAt)return;
-  data=saved;
-  const model=verified(selected);
-  if(!model){data=null;return}
-  draw();
-  g("status").textContent="Posljednji potvrđeni model · provjeravam nove podatke…";
- }catch{data=null}
-}
 function notifyCacheModels(){
   if(!navigator.serviceWorker?.controller)return;
   const allowed=Object.values(data?.regions||{}).filter(x=>x.status==="current"&&x.modelUtc).map(x=>x.modelUtc);
@@ -316,9 +294,11 @@ function radarTime(frame,index){
 function radarNotice(meta){
  const valid=Date.parse(meta?.measuredUtc||"");
  const age=Date.now()-valid;
- if(!Number.isFinite(valid))return "DHMZ radar · vrijeme snimke provjerite na karti";
- const label="DHMZ · posljednja potvrđena snimka "+radarTime({measuredUtc:meta.measuredUtc},radarFrames.length-1);
- return age>35*60000||age< -5*60000||meta.status!=="current"?label+" · STARiji podaci":label;
+ if(!Number.isFinite(valid))return "DHMZ · nije potvrđeno vrijeme radara";
+ const label="DHMZ · posljednja izmjerena snimka "+radarTime({measuredUtc:meta.measuredUtc},radarFrames.length-1);
+ return age>35*60000||meta.status!=="current"
+   ? "POVIJESNI RADAR – novije snimke nisu potvrđene. "+label
+   : label+" · aktualna potvrđena snimka";
 }
 function radarSetPicture(image,label){
  radarImg.src=image.src;radarImg.classList.remove("hidden");radarPlaceholder.classList.add("hidden");
@@ -381,25 +361,16 @@ function radarStart(){
  radarTimer=setInterval(()=>{if(!radarBusy&&activeSection==="radar")radarShow((radarIndex+1)%radarFrames.length)},850);
  radarButtons();
 }
-async function radarDirectFallback(){
- const sources=[
-  "./data/radar-animation.gif?check="+Math.floor(Date.now()/300000),
-  "https://vrijeme.hr/anim_kompozit.gif?check="+Math.floor(Date.now()/300000)
- ];
- for(const url of sources){
-  try{
-   const loaded=await radarImage(url,8500);
-   if(activeSection!=="radar")return false;
-   radarSetPicture(loaded,"DHMZ · animirani radar · vrijeme snimke na karti");
-   g("radar-info").textContent="Izvorni DHMZ prikaz; aktualnost provjeri prema vremenskoj oznaci na slici.";
-   radarSlider.disabled=true;
-   g("radar-position").textContent="Samo GIF animacija";
-   g("radar-start").textContent="";g("radar-end").textContent="";
-   radarMode="animation";radarButtons();
-   return true;
-  }catch{}
- }
- return false;
+// Never replace verified radar timestamps with an unverified animated GIF.
+function radarClear(message){
+ radarStop();radarFrameId++;radarFrames=[];radarCurrentMeta=null;radarCache.clear();
+ radarImg.removeAttribute("src");radarImg.classList.add("hidden");
+ radarPlaceholder.textContent="Nema potvrđene aktualne radarske snimke.";
+ radarPlaceholder.classList.remove("hidden");g("radar-map-time").classList.add("hidden");
+ g("radar-time").textContent="Radar nije dostupan";
+ g("radar-info").textContent=message;
+ g("radar-position").textContent="—";g("radar-start").textContent="";g("radar-end").textContent="";
+ radarSlider.value="0";radarSlider.max="0";radarSlider.disabled=true;
 }
 async function radarLoad(force){
  if(!force&&radarFrames.length&&Date.now()-radarLastRequest<2*60000){
@@ -420,8 +391,16 @@ async function radarLoad(force){
   const meta=await res.json();
   if(seq!==radarLoadId)return;
   const available=Array.isArray(meta.timeline)?meta.timeline.filter(f=>f&&typeof f.path==="string"&&/^data\/radar-frames\/[a-zA-Z0-9_-]+\.png$/.test(f.path)):[];
-  // A delayed scheduled run does NOT make previously captured frames disappear.
-  if(!available.length)throw Error("No radar frames");
+  if(!available.length)throw Error("No verified radar frames");
+  const measured=Date.parse(meta.measuredUtc||"");
+  const checked=Date.parse(meta.checkedAt||"");
+  const age=Date.now()-measured,checkAge=Date.now()-checked;
+  // 35 min = currently valid; 2 h = explicitly labeled history only.
+  // A metadata file older than four hours must never authorize the radar.
+  if(!Number.isFinite(measured)||!Number.isFinite(checked)||
+     age< -5*60000||age>2*3600000||checkAge< -5*60000||checkAge>4*3600000)
+       throw Error("Radar metadata out of date");
+  const historical=age>35*60000||meta.status!=="current";
   const currentVersion=meta.measuredUtc||"";
   const previousVersion=radarCurrentMeta?.measuredUtc||"";
   radarCurrentMeta=meta;
@@ -433,7 +412,7 @@ async function radarLoad(force){
   // Do not reload the same image while the checked publication is unchanged.
   if(currentVersion===previousVersion&&alreadyVisible){
    g("radar-info").textContent=radarNotice(meta);
-   if(radarMode==="animation")radarStart();
+   if(radarMode==="animation"&&!historical)radarStart();
    return;
   }
   radarCache.clear();
@@ -441,21 +420,19 @@ async function radarLoad(force){
   if(seq!==radarLoadId)return;
   if(!success)throw Error("No readable frames");
   g("radar-info").textContent=radarNotice(meta);
-  if(radarMode==="animation")radarStart();
+  if(radarMode==="animation"&&!historical)radarStart();
  }catch(error){
   if(seq!==radarLoadId)return;
-  if(alreadyVisible){
-   g("radar-info").textContent="DHMZ · zadržana posljednja prikazana snimka; novija trenutno nije potvrđena.";
-   if(radarMode==="animation"&&radarFrames.length)radarStart();
+  const ms=Date.parse(radarCurrentMeta?.measuredUtc||"");
+  const check=Date.parse(radarCurrentMeta?.checkedAt||"");
+  const stillCurrent=Number.isFinite(ms)&&Number.isFinite(check)&&
+     Date.now()-ms>=-5*60000&&Date.now()-ms<=35*60000&&
+     Date.now()-check>=-5*60000&&Date.now()-check<=4*3600000;
+  if(alreadyVisible&&stillCurrent){
+   g("radar-info").textContent="Nova provjera nije uspjela; prikazana snimka još je vremenski valjana.";
    return;
   }
-  radarFrames=[];radarSlider.disabled=true;
-  g("radar-info").textContent="Provjeravam izravnu DHMZ animaciju…";
-  const success=await radarDirectFallback();
-  if(!success){
-   radarImg.classList.add("hidden");g("radar-map-time").classList.add("hidden");g("radar-time").textContent="Radar nije dostupan";
-   radarPlaceholder.textContent="DHMZ radar trenutačno nije dostupan.";radarPlaceholder.classList.remove("hidden");
-  }
+  radarClear("Novi DHMZ podaci nisu potvrđeni; ne prikazujem neprovjerenu ili zastarjelu animaciju.");
  }
 }
 radarSlider.oninput=()=>{radarStop();radarMode="manual";radarButtons();const n=Number(radarSlider.value);g("radar-position").textContent=(n+1)+" / "+radarFrames.length+" snimki";g("radar-time").textContent="Učitavam: "+radarTime(radarFrames[n],n);radarShow(n)};
