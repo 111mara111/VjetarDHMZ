@@ -54,10 +54,10 @@ def main():
   # Never substitute an old local GIF if the source cannot be verified.
   if timedelta(minutes=-5)<=age<=timedelta(hours=2):
    SNAPSHOT.parent.mkdir(parents=True,exist_ok=True)
-   img.save(SNAPSHOT,format="PNG",optimize=True)
+   # Only the optimized WebP is served by the app; raw PNG snapshot is unused.
    img.save(PREVIEW,format="WEBP",quality=84,method=4)
    output["previewPath"]="data/radar-latest.webp"
-   ANIMATION.write_bytes(animation_blob)
+   # The app animates timestamp-verified frames; storing the raw GIF is unnecessary.
    if FRAME_DIR.exists():shutil.rmtree(FRAME_DIR)
    FRAME_DIR.mkdir(parents=True)
    timeline=[]

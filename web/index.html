@@ -9,7 +9,7 @@ button{border:1px solid var(--border);background:var(--box);color:var(--text);bo
 button.primary{background:var(--accent);color:#042333;border-color:var(--accent)}.tabs{display:flex;gap:7px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}.tabs button{white-space:nowrap;flex-shrink:0;font-size:13px}.tabs button[aria-selected=true]{border-color:var(--accent);background:var(--soft);color:var(--accent)}
 section{background:var(--box);border:1px solid var(--border);border-radius:16px;overflow:hidden}.status{padding:12px 13px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-bottom:1px solid var(--border);font-size:13px}.status small{color:var(--muted)}#warning{background:var(--soft);padding:10px 13px;font-size:13px}
 .hidden{display:none!important}.map{min-height:320px;display:grid;place-items:center;position:relative;background:#fff}.map img{width:100%;max-width:760px;display:block;object-fit:contain}.map:has(img.hidden){min-height:240px}.empty{background:var(--bg);padding:24px 18px;max-width:330px;color:var(--muted);line-height:1.5;text-align:center;border-radius:12px}.loading{position:absolute;inset:0;display:grid;place-items:center;background:#0006;color:#fff;font-weight:650}
-.controls{padding:13px}.time{display:flex;align-items:center;justify-content:space-between;gap:12px}.time strong{font-size:21px}.time span{font-size:13px;color:var(--muted)}
+.controls{padding:13px}.model-issued{font-size:11px;line-height:1.45;color:var(--muted);margin:7px 0 0;font-variant-numeric:tabular-nums}.time{display:flex;align-items:center;justify-content:space-between;gap:12px}.time strong{font-size:21px}.time span{font-size:13px;color:var(--muted)}
 input[type=range]{width:100%;margin:15px 0;accent-color:var(--accent)}.quick,.actions{display:flex;flex-wrap:wrap;gap:7px}.quick button{flex:1;font-size:12px;padding:8px 9px}.actions{margin-top:14px}
 footer{font-size:12px;color:var(--muted);margin:15px 4px;line-height:1.6}footer a{color:var(--accent)}
 @media(min-width:700px){.map img{width:auto;max-width:100%;max-height:70vh}}
@@ -57,7 +57,7 @@ dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius
 <button type="button" data-section="douglas" aria-selected="false">Douglas</button>
 </nav><div id="wind" class="view">
 <nav class="tabs" id="tabs" aria-label="Područja"></nav><section><div class="map-title"><strong id="title">DHMZ vjetar · Zadar</strong><div class="maptools"><button id="fit" type="button">Cijela karta</button><button id="zoom" type="button">Povećaj</button><button id="refresh">Osvježi prognozu ↻</button></div></div><div class="status hidden" aria-hidden="true"><strong id="status">Provjeravam model…</strong><small id="meta">Ne prikazujem stare karte</small></div><div id="warning" class="hidden" role="status"></div><div class="map" id="map-container"><div id="empty" class="empty">Prognoza trenutačno nije dostupna.</div><img id="image" class="hidden" alt="Karta vjetra DHMZ"><div id="loading" class="loading hidden" aria-hidden="true"></div></div>
-<div class="controls"><div class="time"><strong id="hour">+0 h</strong><strong id="date">—</strong></div><input id="slider" type="range" min="0" max="72" step="1" value="0" disabled aria-label="Sat prognoze"><div class="days"><button data-h="0">1. dan</button><button data-h="24">2. dan</button><button data-h="48">3. dan</button><button data-h="72">4. dan</button></div><div class="actions"><button id="play" class="primary" disabled>▶ Pokreni</button><span class="progress-readout" id="loadinfo" aria-live="polite">Učitano 0 od 73 karte</span><button id="prev" disabled>− 1 h</button><button id="next" disabled>+ 1 h</button></div><div class="progress-track" role="progressbar" aria-label="Učitane karte vjetra" aria-valuemin="0" aria-valuemax="73" aria-valuenow="0" id="wind-progress"><div id="wind-progress-fill"></div></div></div></section></div>
+<div class="controls"><div class="time"><strong id="hour">+0 h</strong><strong id="date">—</strong></div><div class="model-issued" id="model-issued">Provjeravam početak modela i vrijeme zadnje objave…</div><input id="slider" type="range" min="0" max="72" step="1" value="0" disabled aria-label="Sat prognoze"><div class="days"><button data-h="0">1. dan</button><button data-h="24">2. dan</button><button data-h="48">3. dan</button><button data-h="72">4. dan</button></div><div class="actions"><button id="play" class="primary" disabled>▶ Pokreni</button><span class="progress-readout" id="loadinfo" aria-live="polite">Učitano 0 od 73 karte</span><button id="prev" disabled>− 1 h</button><button id="next" disabled>+ 1 h</button></div><div class="progress-track" role="progressbar" aria-label="Učitane karte vjetra" aria-valuemin="0" aria-valuemax="73" aria-valuenow="0" id="wind-progress"><div id="wind-progress-fill"></div></div></div></section></div>
 <section id="nauticari" class="view panel hidden"><h2>Prognoza za Jadran za nautičare</h2><div class="forecast-stamp" id="stamp-nauticari"></div><div class="forecast-text" id="text-nauticari">Učitavam aktualno izvješće…</div><a class="external" href="https://meteo.hr/prognoze.php?param=jadran&amp;section=prognoze_specp" target="_blank" rel="noopener">Otvori na DHMZ-u</a></section>
 <section id="pomorci" class="view panel hidden"><h2>Prognoza za pomorce (NAVTEX)</h2><div class="forecast-stamp" id="stamp-pomorci"></div><div class="forecast-text" id="text-pomorci">Učitavam aktualno izvješće…</div><a class="external" href="https://meteo.hr/prognoze.php?param=pomorci&amp;section=prognoze_specp" target="_blank" rel="noopener">Otvori na DHMZ-u</a></section>
 <section id="radar" class="view panel hidden"><h2>Radar oborina</h2><div class="forecast-stamp">DHMZ · radarska slika i animacija</div><div id="radar-container">
@@ -91,7 +91,7 @@ regs.forEach(r=>{let b=document.createElement("button");b.textContent=r[1];b.dat
 function tabsDraw(){Array.from(tabs.children).forEach(b=>b.setAttribute("aria-selected",String(b.dataset.r===selected)))}
 function stop(){if(tick)clearInterval(tick);tick=null;g("play").textContent="▶ Pokreni"}
 function controls(state){["slider","play","prev","next"].forEach(x=>g(x).disabled=!state);document.querySelectorAll("#quick button").forEach(b=>b.disabled=!state)}
-function blank(text){g("date").textContent="—";img.removeAttribute("src");img.classList.add("hidden");g("empty").textContent=text;g("empty").classList.remove("hidden");controls(false)}
+function blank(text){g("date").textContent="—";g("model-issued").textContent="Nema potvrđenih novih podataka";img.removeAttribute("src");img.classList.add("hidden");g("empty").textContent=text;g("empty").classList.remove("hidden");controls(false)}
 function verified(key){
  let m=data&&data.regions&&data.regions[key];if(!m||m.status!=="current"||!m.modelUtc||!m.checkedAt)return null;
  let age=Date.now()-Date.parse(m.modelUtc),checked=Date.now()-Date.parse(m.checkedAt);
@@ -189,7 +189,7 @@ function draw(){
  let actual=selected,m=verified(actual);
  if(!m&&selected!=="HRv8"&&verified("HRv8")){actual="HRv8";m=verified(actual);g("warning").textContent="DHMZ nema svježu regionalnu kartu za "+regs.find(x=>x[0]===selected)[1]+". Prikazana je aktualna karta cijele Hrvatske.";g("warning").classList.remove("hidden")}
  if(!m){display="";g("status").textContent="Prognoza nije dostupna";g("meta").textContent="";blank("Prognoza nije dostupna.");progressUpdate();return}
- display=actual;g("status").textContent="Aktualni model · "+regs.find(x=>x[0]===actual)[1];g("meta").textContent="Model "+fmt.format(new Date(m.modelUtc))+" · provjera "+fmt.format(new Date(m.checkedAt));controls(true);progressUpdate();loadCacheProgress();show(0);
+ display=actual;g("status").textContent="Aktualni model · "+regs.find(x=>x[0]===actual)[1];g("meta").textContent="Model "+fmt.format(new Date(m.modelUtc))+" · provjera "+fmt.format(new Date(m.checkedAt));g("model-issued").textContent="Početak modela: "+fmt.format(new Date(m.modelUtc))+" · Zadnja provjera: "+fmt.format(new Date(m.checkedAt))+" · +0 h nije mjerenje uživo.";controls(true);progressUpdate();loadCacheProgress();show(0);
 }
 async function refresh(){
   const call=++refreshSequence;
@@ -209,7 +209,7 @@ async function refresh(){
     notifyCacheModels();
     if(display&&current&&prevModel===current.modelUtc&&!img.classList.contains("hidden")){
       g("status").textContent="";
-      g("meta").textContent="Model "+fmt.format(new Date(current.modelUtc))+" · provjera "+fmt.format(new Date(current.checkedAt));
+      g("meta").textContent="Model "+fmt.format(new Date(current.modelUtc))+" · provjera "+fmt.format(new Date(current.checkedAt));g("model-issued").textContent="Početak modela: "+fmt.format(new Date(current.modelUtc))+" · Zadnja provjera: "+fmt.format(new Date(current.checkedAt))+" · +0 h nije mjerenje uživo.";
       return;
     }
     // A different or expired model must never reuse the old frame.
