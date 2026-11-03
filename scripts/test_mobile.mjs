@@ -35,8 +35,9 @@ async function layout(page,section){
  return result;
 }
 const results={baseline,engines:{},performance:{}};
+let activeBrowser;
 try{for(const [name,engine] of [['webkit',webkit],['chromium',chromium]]){
- const browser=await engine.launch({headless:true});const context=await browser.newContext({viewport:{width:402,height:740},isMobile:true,hasTouch:true,serviceWorkers:'block'});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));let state=structuredClone(fixture);await useFixtures(page,state);
+ const browser=await engine.launch({headless:true});activeBrowser=browser;const context=await browser.newContext({viewport:{width:402,height:740},isMobile:true,hasTouch:true,serviceWorkers:'block'});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));let state=structuredClone(fixture);await useFixtures(page,state);
  const checks=[];
  for(const [width,height] of dimensions){await page.setViewportSize({width,height});await page.goto(base,{waitUntil:'load'});await page.waitForFunction(()=>document.querySelector('#image').naturalWidth>0&&!document.querySelector('#image').classList.contains('hidden'));assert.equal(await page.locator('#slider').inputValue(),'0');assert.equal(await page.locator('#install').count(),0);
  for(const section of ['wind','radar','douglas','nauticari','pomorci']){await page.locator(`[data-section="${section}"]`).click();if(section==='radar')await page.waitForFunction(()=>document.querySelector('#radar-image').naturalWidth>0&&!document.querySelector('#radar-image').classList.contains('hidden'));if(['nauticari','pomorci'].includes(section)){await page.waitForFunction(s=>document.querySelector('#text-'+s).textContent.startsWith('TEST'),section);await page.waitForTimeout(40)}checks.push({section,...await layout(page,section)})}}
@@ -49,6 +50,7 @@ try{for(const [name,engine] of [['webkit',webkit],['chromium',chromium]]){
  // Screenshot is explicitly fixture QA, not weather evidence.
  await page.screenshot({path:path.join(out,name+'-mobile-radar-fixture.png')});
  state.manifest.regions=Object.fromEntries(Object.keys(regions).map(r=>[r,{status:'current',modelUtc:old,checkedAt:old}]));state.radar={...fixture.radar,measuredUtc:old,checkedAt:old};await page.reload();await page.waitForFunction(()=>document.querySelector('#refresh').disabled===false);assert.ok(await page.locator('#image').evaluate(e=>e.classList.contains('hidden')));await page.locator('[data-section="radar"]').click();await page.waitForFunction(()=>document.querySelector('#radar-time').textContent==='Radar nije dostupan');assert.ok(await page.locator('#radar-slider').isDisabled());
+ await page.emulateMedia({colorScheme:'dark'});assert.equal(await page.locator('body').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(9, 21, 34)');await layout(page,'radar');
  assert.deepEqual(errors,[]);results.engines[name]={layoutCases:checks.length,checks,fullTextPreserved:true,regions:5,windAnimation:true,radarManual:true,expiredDataHidden:true,errors};console.log('MOBILE_PASS',name,checks.length,'layout cases, paging, all regions, controls, stale data');await context.close();
  // Compare against immediately previous production version with the SAME real generated assets.
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'data/manifest.json'),'utf8')),radar=JSON.parse(fs.readFileSync(path.join(root,'data/radar.json'),'utf8'));
@@ -64,4 +66,4 @@ try{for(const [name,engine] of [['webkit',webkit],['chromium',chromium]]){
  }else{results.performance[name]={skipped:true,reason:'No current verified wind/radar assets; no invented timing'};console.log('MOBILE_PERFORMANCE_SKIPPED',name)}
  await browser.close();
 }assert.ok(current.includes('100dvh'));console.log('ALL_MOBILE_CHECKS_PASS');
-}finally{fs.writeFileSync(path.join(out,'mobile-checks.json'),JSON.stringify(results,null,2));await new Promise(r=>server.close(r))}
+}finally{if(activeBrowser)await activeBrowser.close();server.closeAllConnections();fs.writeFileSync(path.join(out,'mobile-checks.json'),JSON.stringify(results,null,2));await new Promise(r=>server.close(r))}
