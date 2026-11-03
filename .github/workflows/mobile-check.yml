@@ -1,0 +1,41 @@
+name: Mobile layout and paired performance
+on:
+  push:
+    branches: ['codex/iphone-compact-20261103']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser test and OCR dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq tesseract-ocr
+          pip install --disable-pip-version-check pillow pytesseract
+          npm install --no-save --no-audit --no-fund playwright
+          npx playwright install --with-deps webkit chromium
+      - name: Generate real identical assets for both versions
+        run: |
+          python scripts/update_forecast.py & WIND_JOB=$!
+          python scripts/update_radar.py & RADAR_JOB=$!
+          wait "$WIND_JOB"
+          wait "$RADAR_JOB"
+      - name: Verify mobile layouts, functions, freshness and paired speed
+        run: node scripts/test_mobile.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-verification
+          path: benchmark-results/

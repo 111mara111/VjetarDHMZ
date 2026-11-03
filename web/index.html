@@ -2,70 +2,39 @@
 <style>
 :root{color-scheme:light dark;--bg:#f2f6fa;--box:#fff;--text:#102638;--muted:#526a7c;--border:#d3e0ec;--accent:#0787be;--soft:#def2ff}
 @media(prefers-color-scheme:dark){:root{--bg:#091522;--box:#14283a;--text:#f3f8ff;--muted:#adc3d3;--border:#355064;--accent:#65d6ff;--soft:#15374e}}
-*{box-sizing:border-box}html{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif}body{margin:0;background:var(--bg);color:var(--text)}
-main{max-width:900px;margin:auto;padding:calc(16px + env(safe-area-inset-top)) 12px calc(20px + env(safe-area-inset-bottom))}
-header{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:14px}h1{font-size:23px;letter-spacing:-.4px;margin:0}h1 small{display:block;margin-top:3px;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:1px}
-button{border:1px solid var(--border);background:var(--box);color:var(--text);border-radius:12px;font:inherit;font-weight:600;padding:10px 13px;cursor:pointer}button:disabled{opacity:.4}
-button.primary{background:var(--accent);color:#042333;border-color:var(--accent)}.tabs{display:flex;gap:7px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}.tabs button{white-space:nowrap;flex-shrink:0;font-size:13px}.tabs button[aria-selected=true]{border-color:var(--accent);background:var(--soft);color:var(--accent)}
-section{background:var(--box);border:1px solid var(--border);border-radius:16px;overflow:hidden}.status{padding:12px 13px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-bottom:1px solid var(--border);font-size:13px}.status small{color:var(--muted)}#warning{background:var(--soft);padding:10px 13px;font-size:13px}
-.hidden{display:none!important}.map{min-height:320px;display:grid;place-items:center;position:relative;background:#fff}.map img{width:100%;max-width:760px;display:block;object-fit:contain}.map:has(img.hidden){min-height:240px}.empty{background:var(--bg);padding:24px 18px;max-width:330px;color:var(--muted);line-height:1.5;text-align:center;border-radius:12px}.loading{position:absolute;inset:0;display:grid;place-items:center;background:#0006;color:#fff;font-weight:650}
-.controls{padding:13px}.model-issued{font-size:11px;line-height:1.45;color:var(--muted);margin:7px 0 0;font-variant-numeric:tabular-nums}.time{display:flex;align-items:center;justify-content:space-between;gap:12px}.time strong{font-size:21px}.time span{font-size:13px;color:var(--muted)}
-input[type=range]{width:100%;margin:15px 0;accent-color:var(--accent)}.quick,.actions{display:flex;flex-wrap:wrap;gap:7px}.quick button{flex:1;font-size:12px;padding:8px 9px}.actions{margin-top:14px}
-footer{font-size:12px;color:var(--muted);margin:15px 4px;line-height:1.6}footer a{color:var(--accent)}
-@media(min-width:700px){.map img{width:auto;max-width:100%;max-height:70vh}}
-
-.masthead{display:flex;align-items:center;justify-content:space-between;gap:10px}.masthead h1{margin:0;font-size:21px}.subtitle{font-weight:700;letter-spacing:1px;font-size:10px;color:var(--muted)}
-#install{font-size:12px;padding:9px 10px;white-space:nowrap}
-.main-nav{display:flex;gap:3px;background:#18324e;padding:5px;border-radius:14px;margin:7px 0 12px;overflow:auto;scrollbar-width:none}.main-nav button{flex:1;background:transparent;border:0;color:#d2e4f4;font-size:13px;padding:10px 9px;white-space:nowrap}.main-nav button[aria-selected=true]{background:#fff;color:#153657;box-shadow:0 1px 5px #0002}
-.tabs button[aria-selected=true]{border-color:var(--accent)}.map-title{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px}.maptools{display:flex;gap:6px;flex-wrap:wrap}.maptools button{padding:8px;font-size:12px}
-.map{touch-action:none;overflow:hidden;user-select:none;-webkit-user-select:none}.map img{pointer-events:none;will-change:transform;transform-origin:center center;touch-action:none}
-.days{display:flex;gap:7px;margin:12px 0 6px}.days button{flex:1;font-size:12px;padding:9px 4px}.days button[aria-pressed=true]{background:var(--soft);color:var(--accent);border-color:var(--accent)}
-.view.panel{padding:14px 16px;margin-top:12px}.view.panel h2{font-size:19px;margin:3px 0 12px}.forecast-text{white-space:pre-line;line-height:1.65;font-size:15px}.forecast-stamp{font-size:12px;color:var(--muted);margin:10px 0}.external{display:inline-block;margin:14px 0 8px;font-weight:650;font-size:14px}
-
-.radar-tools{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:11px}
-.radar-tools button{flex:1;min-width:94px;padding:8px 7px;font-size:12px}
-.radar-tools button[aria-pressed=true]{background:var(--soft);color:var(--accent);border-color:var(--accent)}
-.radar-viewport{height:clamp(245px,40svh,425px);min-height:245px;border-radius:12px;border:1px solid var(--border);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;background:#f3f5f7;touch-action:none;user-select:none;-webkit-user-select:none}
-.radar-viewport img{max-width:100%;max-height:100%;object-fit:contain;display:block;transform-origin:center center;will-change:transform;pointer-events:none}
-.radar-status{font-size:12px;color:var(--muted);margin:8px 0}
-.radar-scrubber{padding:10px 4px 8px}
-.radar-scrubber .radar-time{margin:0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.radar-scrubber .radar-time strong{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
-#radar-position{font-size:12px;color:var(--muted);font-weight:650;font-variant-numeric:tabular-nums}
-#radar-slider{display:block;width:100%;height:36px;margin:7px 0 0;accent-color:var(--accent);touch-action:pan-y;cursor:pointer}
-#radar-slider::-webkit-slider-thumb{width:24px;height:24px}
-.radar-ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin:0 1px 4px}
-@media(max-width:520px){.radar-tools{gap:5px;margin-bottom:9px}.radar-tools button{font-size:11px;padding:8px 5px;min-width:79px}.radar-viewport{height:clamp(245px,37svh,340px)}.radar-scrubber .radar-time strong{font-size:14px}}
-
-.radar-warning{padding:9px 11px;background:var(--soft);color:var(--text);border-radius:10px;font-size:12px}
-.douglas{border-collapse:collapse;width:100%;font-size:13px}.douglas th,.douglas td{border-bottom:1px solid var(--border);padding:10px 6px;text-align:left}.douglas th{color:var(--muted)}.douglas td:first-child{font-weight:750}
-dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius:16px;color:var(--text);background:var(--box);padding:20px}dialog::backdrop{background:#0009}
-@media(max-width:450px){.main-nav button{font-size:12px;padding:9px 7px}.maptools{width:100%}.maptools button{flex:1}.days button{font-size:11px}}
-
-.progress-readout{flex:1;min-width:155px;text-align:center;font-size:12px;font-weight:650;color:var(--muted);font-variant-numeric:tabular-nums}
-.progress-track{height:5px;border-radius:8px;overflow:hidden;background:var(--border);margin-top:12px}
-#wind-progress-fill{height:100%;width:0;background:var(--accent);transition:width .18s ease}
-@media(max-width:520px){.progress-readout{min-width:calc(100% - 140px);text-align:right}.actions #prev,.actions #next{font-size:12px}}
-
-.map-time{position:absolute;z-index:3;top:10px;left:10px;right:10px;width:fit-content;max-width:calc(100% - 20px);padding:8px 11px;border-radius:9px;background:var(--box);color:var(--text);box-shadow:0 2px 8px #0003;font-size:15px;font-weight:800;pointer-events:none;font-variant-numeric:tabular-nums}
-.time #date{font-size:16px;font-weight:800;text-align:right}.radar-time{margin-top:14px}.radar-time strong{font-size:17px;font-weight:800}.loading{background:transparent;pointer-events:none}
-</style></head><body><main><header class="masthead"><div><small class="subtitle">DHMZ · ALADIN/HR</small><h1>Vjetar Jadran</h1></div><button id="install" type="button">Dodaj na iPhone ＋</button></header><nav class="main-nav" aria-label="Dijelovi aplikacije">
+*{box-sizing:border-box}html{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;height:100%;-webkit-text-size-adjust:100%}body{margin:0;background:var(--bg);color:var(--text);height:100%;overflow:hidden}
+main{max-width:900px;height:100%;height:100dvh;margin:auto;padding:calc(5px + env(safe-area-inset-top)) max(7px,env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:5px;overflow:hidden}
+.masthead{flex:none;display:flex;align-items:center;justify-content:space-between}.masthead>div{display:flex;align-items:baseline;gap:9px}.masthead h1{font-size:18px;letter-spacing:-.4px;margin:0;order:-1}.subtitle{font-size:9px;font-weight:650;letter-spacing:.4px;color:var(--muted)}
+button{border:1px solid var(--border);background:var(--box);color:var(--text);border-radius:8px;font:inherit;font-weight:600;padding:6px 8px;min-height:36px;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.4}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}button.primary{background:var(--accent);color:#042333;border-color:var(--accent)}
+.main-nav{flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;background:#18324e;padding:3px;border-radius:10px}.main-nav button{min-width:0;background:transparent;border:0;color:#d2e4f4;font-size:12px;padding:5px 2px;white-space:nowrap}.main-nav button[aria-selected=true]{background:#fff;color:#153657}
+.view{flex:1;min-height:0;min-width:0}.hidden{display:none!important}#wind{display:flex;flex-direction:column;gap:5px}.tabs{display:grid;grid-template-columns:.8fr 1.4fr .7fr 1fr .9fr;gap:4px;flex:none}.tabs button{font-size:11px;padding:4px 2px;min-width:0;white-space:nowrap}.tabs button[aria-selected=true],.days button[aria-pressed=true],.radar-tools button[aria-pressed=true]{border-color:var(--accent);background:var(--soft);color:var(--accent)}
+section{background:var(--box);border:1px solid var(--border);border-radius:12px;overflow:hidden}#wind>section{flex:1;min-height:0;display:flex;flex-direction:column}.map-title{flex:none;display:flex;align-items:center;justify-content:space-between;gap:3px;flex-wrap:wrap;padding:4px 7px;border-bottom:1px solid var(--border);font-size:12px}.maptools{display:flex;gap:4px}.maptools button{font-size:11px;padding:4px 7px}.status{font-size:12px}#warning{flex:none;background:var(--soft);padding:4px 8px;font-size:11px;line-height:1.3}
+.map{flex:1;min-height:0;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;background:#fff;touch-action:none;overflow:hidden;user-select:none;-webkit-user-select:none}.map img{width:100%;height:100%;min-height:0;object-fit:contain;display:block;pointer-events:none;transform-origin:center;will-change:transform}.empty{padding:16px;color:var(--muted);line-height:1.5;text-align:center;font-size:13px}.loading{position:absolute;inset:0;pointer-events:none}
+.controls{flex:none;padding:6px 8px}.time{display:flex;align-items:center;justify-content:space-between;gap:6px;font-variant-numeric:tabular-nums}.time strong{font-size:17px}.time #date{font-size:13px;font-weight:750;text-align:right}.model-issued{font-size:10px;line-height:1.35;color:var(--muted);margin:3px 0 0;font-variant-numeric:tabular-nums}
+input[type=range]{display:block;width:100%;height:32px;margin:2px 0;accent-color:var(--accent);touch-action:pan-y}.days{display:flex;gap:4px;margin:0}.days button{flex:1;font-size:11px;padding:4px}.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:5px;align-items:center}.actions button{font-size:12px;padding:4px}.progress-readout{grid-row:2;grid-column:1/-1;font-size:10px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}.progress-track{height:3px;border-radius:5px;overflow:hidden;background:var(--border);margin-top:3px}#wind-progress-fill{height:100%;width:0;background:var(--accent)}
+.view.panel{padding:8px 10px;display:flex;flex-direction:column;gap:5px}.view.panel h2{flex:none;font-size:16px;margin:0}.forecast-stamp{flex:none;font-size:10px;color:var(--muted);margin:0;line-height:1.4}.forecast-text{flex:1;min-height:0;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:14px}.forecast-pages{flex:none;display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11px;color:var(--muted)}.forecast-pages button{font-size:12px}.external{flex:none;display:block;margin:0;font-size:11px;line-height:20px;font-weight:650;color:var(--accent)}
+#radar-container{flex:1;min-height:0;display:flex;flex-direction:column;gap:5px}.radar-tools{flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}.radar-tools button{min-width:0;font-size:10px;padding:4px 1px}.radar-viewport{flex:1;min-height:0;min-width:0;border-radius:8px;border:1px solid var(--border);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;background:#f3f5f7;touch-action:none;user-select:none;-webkit-user-select:none}.radar-viewport img{width:100%;height:100%;min-height:0;object-fit:contain;display:block;transform-origin:center;will-change:transform;pointer-events:none}.radar-warning{padding:10px;font-size:12px;color:var(--text)}.radar-scrubber{flex:none;padding:0 2px}.radar-time{display:flex;gap:5px;align-items:center;justify-content:space-between}.radar-time strong{font-size:12px;font-variant-numeric:tabular-nums}#radar-position{font-size:10px;color:var(--muted);white-space:nowrap}#radar-slider{height:36px;margin:0}.radar-ticks{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}.radar-status{flex:none;font-size:10px;line-height:1.4;color:var(--muted);margin:0}.map-time{position:absolute;z-index:3;top:6px;left:6px;max-width:calc(100% - 12px);padding:5px 7px;border-radius:6px;background:var(--box);color:var(--text);font-size:12px;font-weight:750;pointer-events:none;font-variant-numeric:tabular-nums}
+.douglas{border-collapse:collapse;width:100%;font-size:12px}.douglas th,.douglas td{border-bottom:1px solid var(--border);padding:7px 4px;text-align:left}.douglas th{color:var(--muted)}.douglas td:first-child{font-weight:750}footer{flex:none;font-size:9px;color:var(--muted);line-height:1.3}footer a{color:var(--accent)}
+@media(max-width:520px){.map-title>strong{width:100%;font-size:11px}.maptools{width:100%}.maptools button{flex:1}}
+@media(max-height:680px){.masthead h1{font-size:16px}.model-issued{font-size:9px}.controls{padding:4px 7px}.view.panel{padding:6px 8px;gap:4px}.douglas th,.douglas td{padding:4px}.map-title>strong{display:none}footer{font-size:8px}}
+@media(orientation:landscape) and (max-height:500px){main{gap:3px}.masthead{display:none}.main-nav button{min-height:32px}#wind{gap:3px}.tabs button{min-height:32px}#wind>section{display:grid;grid-template-columns:minmax(0,1fr) 280px;grid-template-rows:auto auto minmax(0,1fr)}.map-title{grid-column:1;grid-row:1}.map-title>strong{display:none}.maptools{width:100%}.maptools button{flex:1}#warning{grid-column:1;grid-row:2}.map{grid-column:1;grid-row:3}.controls{grid-column:2;grid-row:1/4;align-self:center}.radar-tools{grid-column:1/-1}#radar-container{display:grid;grid-template-columns:minmax(0,1fr) 240px;grid-template-rows:auto auto minmax(0,1fr)}.radar-viewport{grid-column:1;grid-row:2/4}.radar-scrubber{grid-column:2;grid-row:2}.radar-status{grid-column:2;grid-row:3}.douglas{font-size:10px}.douglas th,.douglas td{padding:2px}footer{display:none}}
+</style></head><body><main><header class="masthead"><div><small class="subtitle">DHMZ · ALADIN/HR</small><h1>Vjetar Jadran</h1></div></header><nav class="main-nav" aria-label="Dijelovi aplikacije">
 <button type="button" data-section="wind" aria-selected="true">Vjetar</button>
 <button type="button" data-section="nauticari" aria-selected="false">Nautičari</button>
 <button type="button" data-section="pomorci" aria-selected="false">Pomorci</button>
 <button type="button" data-section="radar" aria-selected="false">Radar</button>
 <button type="button" data-section="douglas" aria-selected="false">Douglas</button>
 </nav><div id="wind" class="view">
-<nav class="tabs" id="tabs" aria-label="Područja"></nav><section><div class="map-title"><strong id="title">DHMZ vjetar · Zadar</strong><div class="maptools"><button id="fit" type="button">Cijela karta</button><button id="zoom" type="button">Povećaj</button><button id="refresh">Osvježi prognozu ↻</button></div></div><div class="status hidden" aria-hidden="true"><strong id="status">Provjeravam model…</strong><small id="meta">Ne prikazujem stare karte</small></div><div id="warning" class="hidden" role="status"></div><div class="map" id="map-container"><div id="empty" class="empty">Prognoza trenutačno nije dostupna.</div><img id="image" class="hidden" alt="Karta vjetra DHMZ"><div id="loading" class="loading hidden" aria-hidden="true"></div></div>
+<nav class="tabs" id="tabs" aria-label="Područja"></nav><section><div class="map-title"><strong id="title">DHMZ vjetar · Zadar</strong><div class="maptools"><button id="fit" type="button">Cijela karta</button><button id="zoom" type="button">Povećaj</button><button id="refresh">Osvježi ↻</button></div></div><div class="status hidden" aria-hidden="true"><strong id="status">Provjeravam model…</strong><small id="meta">Ne prikazujem stare karte</small></div><div id="warning" class="hidden" role="status"></div><div class="map" id="map-container"><div id="empty" class="empty">Prognoza trenutačno nije dostupna.</div><img id="image" class="hidden" alt="Karta vjetra DHMZ"><div id="loading" class="loading hidden" aria-hidden="true"></div></div>
 <div class="controls"><div class="time"><strong id="hour">+0 h</strong><strong id="date">—</strong></div><div class="model-issued" id="model-issued">Provjeravam početak modela i vrijeme zadnje objave…</div><input id="slider" type="range" min="0" max="72" step="1" value="0" disabled aria-label="Sat prognoze"><div class="days"><button data-h="0">1. dan</button><button data-h="24">2. dan</button><button data-h="48">3. dan</button><button data-h="72">4. dan</button></div><div class="actions"><button id="play" class="primary" disabled>▶ Pokreni</button><span class="progress-readout" id="loadinfo" aria-live="polite">Učitano 0 od 73 karte</span><button id="prev" disabled>− 1 h</button><button id="next" disabled>+ 1 h</button></div><div class="progress-track" role="progressbar" aria-label="Učitane karte vjetra" aria-valuemin="0" aria-valuemax="73" aria-valuenow="0" id="wind-progress"><div id="wind-progress-fill"></div></div></div></section></div>
 <section id="nauticari" class="view panel hidden"><h2>Prognoza za Jadran za nautičare</h2><div class="forecast-stamp" id="stamp-nauticari"></div><div class="forecast-text" id="text-nauticari">Učitavam aktualno izvješće…</div><a class="external" href="https://meteo.hr/prognoze.php?param=jadran&amp;section=prognoze_specp" target="_blank" rel="noopener">Otvori na DHMZ-u</a></section>
 <section id="pomorci" class="view panel hidden"><h2>Prognoza za pomorce (NAVTEX)</h2><div class="forecast-stamp" id="stamp-pomorci"></div><div class="forecast-text" id="text-pomorci">Učitavam aktualno izvješće…</div><a class="external" href="https://meteo.hr/prognoze.php?param=pomorci&amp;section=prognoze_specp" target="_blank" rel="noopener">Otvori na DHMZ-u</a></section>
 <section id="radar" class="view panel hidden"><h2>Radar oborina</h2><div class="forecast-stamp">DHMZ · radarska slika i animacija</div><div id="radar-container">
-<div class="radar-tools"><button id="radar-play" aria-pressed="true">Ⅱ Animacija</button><button id="radar-static" aria-pressed="false">Trenutno</button><button id="radar-zoom">Povećaj ＋</button><button id="radar-fit">Cijela slika</button><button id="radar-refresh">↻ Osvježi</button></div>
+<div class="radar-tools"><button id="radar-play" aria-pressed="true">Ⅱ Animacija</button><button id="radar-static" aria-pressed="false">Trenutno</button><button id="radar-zoom">Povećaj</button><button id="radar-fit">Cijela</button><button id="radar-refresh">↻ Osvježi</button></div>
 <div class="radar-viewport" id="radar-viewport"><img id="radar-image" alt="DHMZ radarski kompozit oborine, s vremenskom oznakom na karti" class="hidden"><div id="radar-placeholder" class="radar-warning">Radar trenutačno nije dostupan.</div><strong id="radar-map-time" class="map-time hidden"></strong></div>
 <div class="radar-scrubber" aria-label="Ručno pregledavanje radarskih snimaka"><div class="time radar-time"><strong id="radar-time">Vrijeme na karti</strong><span id="radar-position">—</span></div><input id="radar-slider" type="range" min="0" max="0" step="1" value="0" disabled aria-label="Ručno pomicanje vremena radarske snimke"><div class="radar-ticks"><span id="radar-start">Najstarija snimka</span><span id="radar-end">Najnovija snimka</span></div></div><div id="radar-info" class="radar-status" role="status"></div>
 </div><a class="external" href="https://meteo.hr/naslovnica_radarska-slika.php?tab=radari" target="_blank" rel="noopener">Otvori službeni DHMZ radar</a></section>
-<section id="douglas" class="view panel hidden"><h2>Douglasova skala</h2><p class="forecast-stamp">Opis stanja mora i visina valova — referentna skala, ne trenutačno mjerenje.</p><table class="douglas"><thead><tr><th>Stanje</th><th>Opis</th><th>Valovi (m)</th></tr></thead><tbody>
+<section id="douglas" class="view panel hidden"><h2>Douglasova skala</h2><p class="forecast-stamp">Stanje mora i visina valova · referentna skala.</p><table class="douglas"><thead><tr><th>Stanje</th><th>Opis</th><th>Valovi (m)</th></tr></thead><tbody>
 <tr><td>0</td><td>Mirno, poput zrcala</td><td>0</td></tr>
 <tr><td>1</td><td>Mirno, naborano</td><td>0–0,1</td></tr>
 <tr><td>2</td><td>Malo valovito</td><td>0,1–0,5</td></tr>
@@ -77,7 +46,7 @@ dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius
 <tr><td>8</td><td>Vrlo teško</td><td>9–14</td></tr>
 <tr><td>9</td><td>Izuzetno teško</td><td>više od 14</td></tr>
 </tbody></table><a class="external" href="https://meteo.hr/prognoze.php?param=jadran&amp;section=prognoze_specp" target="_blank" rel="noopener">Izvor: DHMZ</a></section>
-<dialog id="install-dialog"><h2>Dodaj na iPhone ili iPad</h2><p>Otvori stranicu u Safariju, pritisni <strong>Share</strong>, zatim <strong>Add to Home Screen</strong> i <strong>Add</strong>.</p><button id="close-dialog">Zatvori</button></dialog>
+
 <footer>Izvor: <a href="https://www.meteo.hr/infrastruktura.php?param=aladin&amp;section=prognosticki_modeli">DHMZ ALADIN/HR</a>. Model je prognoza, a ne trenutačno mjerenje.</footer></main>
 <script>
 (function(){
@@ -85,6 +54,8 @@ dialog{max-width:calc(100vw - 36px);border:1px solid var(--border);border-radius
 const regs=[["MASL","Zadar"],["SENJ","Istra + Kvarner"],["SPLI","Split"],["DUBR","Dubrovnik"],["HRv8","Hrvatska"]];
 const g=id=>document.getElementById(id),img=g("image"),sl=g("slider"),tabs=g("tabs");
 const fmt=new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+const frameFmt=new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",weekday:"long",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+const shortFmt=new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",hour:"2-digit",minute:"2-digit"});
 let data=null,selected="MASL",display="",hour=0,pending=0,tick=null,busy=false,cache=new Map(),lastFetch=0,refreshSequence=0;
 let preloadGeneration=0,loadedByModel=new Map(),startupStarted=performance.now(),reportedFirst=false;
 regs.forEach(r=>{let b=document.createElement("button");b.textContent=r[1];b.dataset.r=r[0];b.onclick=()=>{selected=r[0];tabsDraw();draw()};tabs.append(b)});
@@ -235,14 +206,14 @@ function notifyCacheModels(){
   navigator.serviceWorker.controller.postMessage({type:"KEEP_MODELS",models:allowed});
 }
 
-g("refresh").onclick=refresh;let sliderTimer=null;sl.oninput=()=>{clearTimeout(sliderTimer);sliderTimer=setTimeout(()=>{stop();show(sl.value)},110)};g("prev").onclick=()=>{stop();show(hour-1)};g("next").onclick=()=>{stop();show(hour+1)};
+g("refresh").onclick=refresh;let sliderTimer=null;sl.oninput=()=>{clearTimeout(sliderTimer);stop();const ready=display&&verified(display)&&cache.has(src(display,Number(sl.value)));if(ready)show(sl.value);else sliderTimer=setTimeout(()=>show(sl.value),110)};g("prev").onclick=()=>{stop();show(hour-1)};g("next").onclick=()=>{stop();show(hour+1)};
 document.querySelectorAll("#quick button").forEach(b=>b.onclick=()=>{stop();show(b.dataset.h)});
 g("play").onclick=()=>{if(tick){stop();return}if(!display)return;g("play").textContent="Ⅱ Pauza";tick=setInterval(()=>{if(!busy&&hour<72)show(hour+1);else if(hour>=72)stop()},900)};
 document.addEventListener("visibilitychange",()=>{if(document.hidden){stop();radarStop()}});
 window.addEventListener("pageshow",e=>{if(e.persisted&&Date.now()-lastFetch>60000)refresh()});tabsDraw();
 
 let activeSection="wind",activeData=null,forecastFetch=null,zoomScale=1,zoomX=0,zoomY=0,points=new Map(),pinch=null;
-function forecastTime(m,h){return new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",weekday:"long",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(Date.parse(m.modelUtc)+h*3600000));}
+function forecastTime(m,h){return frameFmt.format(new Date(Date.parse(m.modelUtc)+h*3600000));}
 function updateWindTitle(){const label=regs.find(x=>x[0]===selected)?.[1]||selected;g("title").textContent="DHMZ vjetar · "+label;document.querySelectorAll(".days button").forEach(b=>b.setAttribute("aria-pressed",String(Number(b.dataset.h)===Math.min(72,Math.floor(hour/24)*24))))}
 function chooseSection(section){
  activeSection=section;stop();if(section!=="radar")radarStop();
@@ -259,7 +230,31 @@ async function loadForecast(section){
  const limit=section==="nauticari"?14*3600000:28*3600000;
  const ok=entry?.status==="current"&&age>=-3600000&&age<=limit&&check>=-300000&&check<4*3600000&&typeof entry?.text==="string";
  g("stamp-"+section).textContent=ok?"DHMZ · izdano "+fmt.format(new Date(entry.issuedUtc))+" · provjereno "+fmt.format(new Date(entry.checkedAt)):"DHMZ · svježa prognoza nije potvrđena";
- g("text-"+section).textContent=ok?entry.text:"Nova službena prognoza nije potvrđena. Ne prikazujem zastarjele tekstove. Za najnovije podatke otvori DHMZ poveznicu ispod.";
+ setForecastText(section,ok?entry.text:"Nova službena prognoza nije potvrđena. Ne prikazujem zastarjele tekstove. Za najnovije podatke otvori DHMZ poveznicu ispod.");
+}
+const reports=new Map();
+for(const section of ["nauticari","pomorci"]){
+ const body=g("text-"+section),pager=document.createElement("nav");
+ pager.className="forecast-pages";pager.setAttribute("aria-label","Stranice prognoze");
+ const prev=document.createElement("button"),label=document.createElement("span"),next=document.createElement("button");
+ prev.textContent="‹ Prethodna";next.textContent="Sljedeća ›";label.setAttribute("aria-live","polite");
+ pager.append(prev,label,next);body.after(pager);
+ const report={body,prev,next,label,text:body.textContent,pages:[],index:0,width:0,height:0};reports.set(section,report);
+ prev.onclick=()=>{report.index--;paintReport(report)};next.onclick=()=>{report.index++;paintReport(report)};
+ new ResizeObserver(()=>{if(body.clientWidth&&body.clientHeight&&(body.clientWidth!==report.width||body.clientHeight!==report.height))paginateReport(report)}).observe(body);
+}
+function paintReport(r){r.index=Math.max(0,Math.min(r.pages.length-1,r.index));r.body.textContent=r.pages[r.index]||r.text;r.prev.disabled=r.index===0;r.next.disabled=r.index>=r.pages.length-1;r.label.textContent=(r.index+1)+" / "+Math.max(1,r.pages.length);}
+function setForecastText(section,text){const r=reports.get(section);if(r.text!==text){r.text=text;r.index=0;r.pages=[]}paginateReport(r);}
+function paginateReport(r){
+ if(!r.body.clientHeight||!r.body.clientWidth)return;
+ r.width=r.body.clientWidth;r.height=r.body.clientHeight;
+ const tokens=r.text.match(/\S+\s*|\s+/g)||[""];r.pages=[];let start=0;
+ while(start<tokens.length){
+  let lo=start+1,hi=tokens.length,best=start+1;
+  while(lo<=hi){const mid=(lo+hi)>>1;r.body.textContent=tokens.slice(start,mid).join("");if(r.body.scrollHeight<=r.height){best=mid;lo=mid+1}else hi=mid-1}
+  r.pages.push(tokens.slice(start,best).join(""));start=best;
+ }
+ paintReport(r);
 }
 function zoomApply(){img.style.transform="translate3d("+zoomX+"px,"+zoomY+"px,0) scale("+zoomScale+")"}
 function zoomTo(v){zoomScale=Math.min(5,Math.max(1,v));if(zoomScale===1){zoomX=0;zoomY=0}zoomApply()}
@@ -275,8 +270,6 @@ view.addEventListener("pointermove",e=>{
 });
 function pointerEnd(e){points.delete(e.pointerId);pinch=null}view.addEventListener("pointerup",pointerEnd);view.addEventListener("pointercancel",pointerEnd);
 view.addEventListener("dblclick",()=>zoomTo(zoomScale>1?1:2));
-g("install").onclick=()=>g("install-dialog").showModal();
-g("close-dialog").onclick=()=>g("install-dialog").close();
 document.querySelectorAll(".main-nav button").forEach(b=>b.onclick=()=>chooseSection(b.dataset.section));
 document.querySelectorAll(".days button").forEach(b=>b.onclick=()=>{stop();show(Number(b.dataset.h))});
 
@@ -289,7 +282,7 @@ function radarButtons(){g("radar-play").setAttribute("aria-pressed",String(Boole
 function radarStop(){if(radarTimer)clearInterval(radarTimer);radarTimer=null;radarButtons()}
 function radarTime(frame,index){
  const time=frame?.measuredUtc;
- return time?new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",weekday:"long",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(time)):"Kadar "+(index+1)+" / "+radarFrames.length+" · vrijeme na karti";
+ return time?frameFmt.format(new Date(time)):"Kadar "+(index+1)+" / "+radarFrames.length+" · vrijeme na karti";
 }
 function radarNotice(meta){
  const valid=Date.parse(meta?.measuredUtc||"");
@@ -306,7 +299,7 @@ function radarSetPicture(image,label){
 }
 function radarSetRange(){
  const first=radarFrames[0],last=radarFrames[radarFrames.length-1];
- const fmtShort=new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",hour:"2-digit",minute:"2-digit"});
+ const fmtShort=shortFmt;
  g("radar-start").textContent=first?.measuredUtc?fmtShort.format(new Date(first.measuredUtc)):"Početak";
  g("radar-end").textContent=last?.measuredUtc?fmtShort.format(new Date(last.measuredUtc)):"Kraj";
  g("radar-position").textContent=radarFrames.length>1?(radarIndex+1)+" / "+radarFrames.length+" snimki":"—";
