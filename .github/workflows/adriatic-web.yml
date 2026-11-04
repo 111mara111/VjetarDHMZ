@@ -16,7 +16,8 @@ on:
       - 'scripts/test_webkit.mjs'
       - '.github/workflows/adriatic-web.yml'
   schedule:
-    - cron: '*/10 * * * *'
+    # Avoid the start-of-hour peak when GitHub may drop scheduled runs.
+    - cron: '7,17,27,37,47,57 * * * *'
   workflow_dispatch:
 permissions:
   contents: read
@@ -65,9 +66,11 @@ jobs:
           path: web
       - uses: actions/deploy-pages@v4
       - name: Measure cold first-image transfer (direct DHMZ versus optimized preview)
+        if: github.event_name != 'schedule'
         continue-on-error: true
         run: python scripts/benchmark_first_frame.py
       - name: Benchmark actual first visible wind image in headless Chrome
+        if: github.event_name != 'schedule'
         continue-on-error: true
         run: |
           npm install --no-save --no-audit --no-fund playwright-core
