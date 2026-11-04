@@ -25,8 +25,7 @@ def get_frame(region,hour):
     return raw
 
 def iso(t):return t.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00","Z")
-def check(region,now):
-    raw=get_frame(region,0)
+def check(raw,now):
     im=Image.open(io.BytesIO(raw)).convert("RGB")
     w,h=im.size
     crop=ImageOps.grayscale(im.crop((0,int(h*.90),int(w*.72),h)))
@@ -49,12 +48,12 @@ def main():
     regs={}
     for region in REGIONS:
         try:
-            regs[region]=check(region,now)
+            blob=get_frame(region,0)
+            regs[region]=check(blob,now)
             if regs[region]["status"]=="current":
                 # The UI always opens at +0 h. Generate a fast preview for that exact frame.
                 preview_hour=0
                 try:
-                    blob=get_frame(region,preview_hour)
                     ASSETS.mkdir(parents=True,exist_ok=True)
                     (ASSETS/("wind_"+region+".png")).write_bytes(blob)
                     webp_name="wind_"+region+".webp"
