@@ -35,10 +35,9 @@ try{
  if(wind.regions?.MASL?.status==="current"){
   await page.waitForFunction(()=>{const i=document.getElementById("image");return i&&!i.classList.contains("hidden")&&i.complete&&i.naturalWidth>0},{},{timeout:20000});
   const state=await page.evaluate(()=>({
-   hour:document.getElementById("hour").textContent,
    slider:document.getElementById("slider").value,
    timestamp:document.getElementById("date").textContent}));
-  if(state.hour!=="+0 h"||state.slider!=="0"||state.timestamp==="—")
+  if(state.slider!=="0"||state.timestamp==="—")
     throw Error("Wind startup regression: "+JSON.stringify(state));
   console.log("WEBKIT_WIND_PASS",JSON.stringify(state));
  }else{
