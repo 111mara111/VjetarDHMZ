@@ -256,10 +256,11 @@ document.querySelectorAll(".days button").forEach(b=>b.onclick=()=>{stop();show(
 
 let radarMode="animation",radarLastRequest=0,radarZoom=1,radarX=0,radarY=0,radarPointers=new Map(),radarPinch=null,radarLoadId=0,radarFrameId=0;
 let radarFrames=[],radarIndex=0,radarTimer=null,radarBusy=false,radarCurrentMeta=null,radarCache=new Map();
+let radarDirect=null;
 const radarImg=g("radar-image"),radarView=g("radar-viewport"),radarPlaceholder=g("radar-placeholder"),radarSlider=g("radar-slider");
 function radarApply(){radarImg.style.transform="translate3d("+radarX+"px,"+radarY+"px,0) scale("+radarZoom+")"}
 function radarZoomTo(s){radarZoom=Math.min(5,Math.max(1,s));if(radarZoom===1){radarX=0;radarY=0}radarApply()}
-function radarButtons(){g("radar-play").setAttribute("aria-pressed",String(Boolean(radarTimer)));g("radar-play").textContent=radarTimer?"Ⅱ Pauza":"▶ Animacija";g("radar-static").setAttribute("aria-pressed",String(radarMode==="static"))}
+function radarButtons(){g("radar-play").setAttribute("aria-pressed",String(Boolean(radarTimer||radarDirect==="animation")));g("radar-play").textContent=radarTimer||radarDirect==="animation"?"Ⅱ Pauza":"▶ Animacija";g("radar-static").setAttribute("aria-pressed",String(radarMode==="static"))}
 function radarStop(){if(radarTimer)clearInterval(radarTimer);radarTimer=null;radarButtons()}
 function radarTime(frame,index){
  const time=frame?.measuredUtc;
@@ -335,9 +336,8 @@ function radarStart(){
  radarTimer=setInterval(()=>{if(!radarBusy&&activeSection==="radar")radarShow((radarIndex+1)%radarFrames.length)},850);
  radarButtons();
 }
-// Never replace verified radar timestamps with an unverified animated GIF.
 function radarClear(message){
- radarStop();radarFrameId++;radarFrames=[];radarCurrentMeta=null;radarCache.clear();
+ radarDirect=null;radarStop();radarFrameId++;radarFrames=[];radarCurrentMeta=null;radarCache.clear();
  radarImg.removeAttribute("src");radarImg.classList.add("hidden");
  radarPlaceholder.textContent="Nema potvrđene aktualne radarske snimke.";
  radarPlaceholder.classList.remove("hidden");g("radar-map-time").classList.add("hidden");
@@ -345,6 +345,21 @@ function radarClear(message){
  g("radar-info").textContent=message;
  g("radar-position").textContent="—";g("radar-start").textContent="";g("radar-end").textContent="";
  radarSlider.value="0";radarSlider.max="0";radarSlider.disabled=true;
+}
+async function radarLoadDirect(seq){
+ const mode=radarMode==="animation"?"animation":"static";
+ const path=mode==="animation"?"anim_kompozit.gif":"kompozit-stat.png";
+ try{
+  const image=await radarImage("https://vrijeme.hr/"+path+"?v="+Date.now());
+  if(seq!==radarLoadId)return;
+  radarDirect=mode;
+  radarSetPicture(image,"Izravno s DHMZ-a");
+  g("radar-map-time").classList.add("hidden");
+  g("radar-info").textContent="Vrijeme snimke piše na karti. Ručni klizač dostupan je kad se objave provjereni kadrovi.";
+  radarButtons();
+ }catch{
+  if(seq===radarLoadId)g("radar-info").textContent="Izravni DHMZ radar trenutačno nije dostupan. Pokušaj osvježiti.";
+ }
 }
 async function radarLoad(force){
  if(!force&&radarFrames.length&&Date.now()-radarLastRequest<2*60000){
@@ -377,6 +392,7 @@ async function radarLoad(force){
   const historical=age>35*60000||meta.status!=="current";
   const currentVersion=meta.measuredUtc||"";
   const previousVersion=radarCurrentMeta?.measuredUtc||"";
+  radarDirect=null;
   radarCurrentMeta=meta;
   radarFrames=available;
   radarSlider.max=String(available.length-1);
@@ -406,12 +422,13 @@ async function radarLoad(force){
    g("radar-info").textContent="Nova provjera nije uspjela; prikazana snimka još je vremenski valjana.";
    return;
   }
-  radarClear("Novi DHMZ podaci nisu potvrđeni; ne prikazujem neprovjerenu ili zastarjelu animaciju.");
+  if(!radarDirect)radarClear("Učitavam radar izravno s DHMZ-a…");
+  await radarLoadDirect(seq);
  }
 }
 radarSlider.oninput=()=>{radarStop();radarMode="manual";radarButtons();const n=Number(radarSlider.value);g("radar-position").textContent=(n+1)+" / "+radarFrames.length+" snimki";g("radar-time").textContent="Učitavam: "+radarTime(radarFrames[n],n);radarShow(n)};
-g("radar-play").onclick=()=>{if(radarTimer){radarStop();radarMode="manual"}else if(radarFrames.length>1)radarStart();else radarLoad(true)};
-g("radar-static").onclick=()=>{radarStop();radarMode="static";radarButtons();if(radarFrames.length)radarShow(radarFrames.length-1);else radarLoad(true)};
+g("radar-play").onclick=()=>{if(radarDirect){radarMode=radarDirect==="animation"?"static":"animation";radarLoadDirect(++radarLoadId)}else if(radarTimer){radarMode="manual";radarStop()}else if(radarFrames.length>1)radarStart();else{radarMode="animation";radarLoad(true)}};
+g("radar-static").onclick=()=>{radarStop();radarMode="static";radarButtons();if(radarFrames.length)radarShow(radarFrames.length-1);else if(radarDirect)radarLoadDirect(++radarLoadId);else radarLoad(true)};
 g("radar-zoom").onclick=()=>radarZoomTo(radarZoom<2?2:radarZoom<3?3:5);
 g("radar-fit").onclick=()=>radarZoomTo(1);
 g("radar-refresh").onclick=()=>radarLoad(true);
