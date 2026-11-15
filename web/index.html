@@ -57,6 +57,7 @@ const fmt=new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",day:"2-digit
 const frameFmt=new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",weekday:"long",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
 const shortFmt=new Intl.DateTimeFormat("hr-HR",{timeZone:"Europe/Zagreb",hour:"2-digit",minute:"2-digit"});
 let data=null,selected="MASL",display="",hour=0,pending=0,tick=null,busy=false,cache=new Map(),lastFetch=0,refreshSequence=0;
+let directWind=false,directWindVersion=0;
 let preloadGeneration=0,loadedByModel=new Map(),startupStarted=performance.now(),reportedFirst=false;
 regs.forEach(r=>{let b=document.createElement("button");b.textContent=r[1];b.dataset.r=r[0];b.onclick=()=>{selected=r[0];tabsDraw();draw()};tabs.append(b)});
 function tabsDraw(){Array.from(tabs.children).forEach(b=>b.setAttribute("aria-selected",String(b.dataset.r===selected)))}
@@ -69,6 +70,7 @@ function verified(key){
  return age>=-3600000&&age<=Math.min(16,Number(data.maxModelAgeHours)||16)*3600000&&checked>=-300000&&checked<=14400000?m:null;
 }
 function modelKey(reg){
+ if(directWind)return reg+"|direct-"+directWindVersion;
  const m=verified(reg);
  return m?reg+"|"+m.modelUtc:null;
 }
@@ -87,6 +89,7 @@ function progressUpdate(){
  g("wind-progress-fill").style.width=(n/73*100)+"%";
 }
 function src(reg,h){
+ if(directWind)return "https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?direct="+directWindVersion;
  const m=verified(reg);
  if(!m)throw Error("Model nije potvrđen");
  if(m.previewPath&&m.previewHour===Number(h)){
@@ -97,7 +100,7 @@ function src(reg,h){
 function preload(reg,h,priority="high"){
  const k=src(reg,h);
  if(cache.has(k))return cache.get(k);
- const fallback="https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?model="+encodeURIComponent(verified(reg).modelUtc)+"&retry="+Date.now();
+ const fallback="https://prognoza.hr/aladinHR/web_uv10_"+reg+"_"+String(h).padStart(2,"0")+".png?model="+encodeURIComponent(verified(reg)?.modelUtc||"")+"&retry="+Date.now();
  const urls=k.startsWith("./")?[k,fallback]:[k];
  const p=new Promise((resolve,reject)=>{
    let attempt=0;
@@ -149,18 +152,26 @@ function loadCacheProgress(){
 async function show(h){
  if(!display)return;
  let seq=++pending,reg=display,n=Math.min(72,Math.max(0,Number(h)));hour=n;sl.value=n;updateWindTitle();
- const m=verified(reg);if(!m){stop();draw();return}
- g("date").textContent=forecastTime(m,n);g("loading").classList.remove("hidden");busy=true;
+ const m=verified(reg);if(!m&&!directWind){stop();draw();return}
+ g("date").textContent=directWind?"Datum i vrijeme prognoze na DHMZ karti":forecastTime(m,n);g("loading").classList.remove("hidden");busy=true;
  try{let loaded=await preload(reg,n);if(seq!==pending||display!==reg)return;img.src=loaded.src;img.classList.remove("hidden");g("empty").classList.add("hidden");if(!reportedFirst){reportedFirst=true;g("status").dataset.firstMapMs=String(Math.round(performance.now()-startupStarted));}preloadRemaining(reg,n);}
  catch(e){if(seq===pending){stop();blank("Preuzimanje nije uspjelo. Pritisnite Osvježi. "+e.message)}}
  finally{if(seq===pending){busy=false;g("loading").classList.add("hidden")}}
 }
 function draw(){
- stop();pending++;busy=false;preloadGeneration++;g("warning").classList.add("hidden");zoomTo(1);blank("Prognoza trenutačno nije dostupna.");
+ directWind=false;stop();pending++;busy=false;preloadGeneration++;g("warning").classList.add("hidden");zoomTo(1);blank("Prognoza trenutačno nije dostupna.");
  let actual=selected,m=verified(actual);
  if(!m&&selected!=="HRv8"&&verified("HRv8")){actual="HRv8";m=verified(actual);g("warning").textContent="DHMZ nema svježu regionalnu kartu za "+regs.find(x=>x[0]===selected)[1]+". Prikazana je aktualna karta cijele Hrvatske.";g("warning").classList.remove("hidden")}
- if(!m){display="";g("status").textContent="Prognoza nije dostupna";g("meta").textContent="";blank("Prognoza nije dostupna.");progressUpdate();return}
+ if(!m){startDirectWind();return}
  display=actual;g("status").textContent="Aktualni model · "+regs.find(x=>x[0]===actual)[1];g("meta").textContent="Model "+fmt.format(new Date(m.modelUtc))+" · provjera "+fmt.format(new Date(m.checkedAt));g("model-issued").textContent="Početak modela: "+fmt.format(new Date(m.modelUtc))+" · Zadnja provjera: "+fmt.format(new Date(m.checkedAt))+" · +0 h nije mjerenje uživo.";controls(true);progressUpdate();loadCacheProgress();show(0);
+}
+function startDirectWind(){
+ directWind=true;directWindVersion=Date.now();display=selected;
+ cache.clear();preloadGeneration++;
+ g("status").textContent="Izravno s DHMZ-a";
+ g("meta").textContent="";
+ g("model-issued").textContent="Izravna DHMZ karta · početak modela i termin prognoze pišu na slici.";
+ controls(true);progressUpdate();show(0);
 }
 async function refresh(){
   const call=++refreshSequence;
@@ -178,7 +189,7 @@ async function refresh(){
     data=next;
     const current=display?verified(display):null;
     notifyCacheModels();
-    if(display&&current&&prevModel===current.modelUtc&&!img.classList.contains("hidden")){
+    if(!directWind&&display&&current&&prevModel===current.modelUtc&&!img.classList.contains("hidden")){
       g("status").textContent="";
       g("meta").textContent="Model "+fmt.format(new Date(current.modelUtc))+" · provjera "+fmt.format(new Date(current.checkedAt));g("model-issued").textContent="Početak modela: "+fmt.format(new Date(current.modelUtc))+" · Zadnja provjera: "+fmt.format(new Date(current.checkedAt))+" · +0 h nije mjerenje uživo.";
       return;
@@ -195,7 +206,7 @@ async function refresh(){
       stop();pending++;display="";data=null;cache.clear();
       g("status").textContent="Nije moguće potvrditi aktualnost prognoze";
       g("meta").textContent="Provjera nije dostupna";
-      blank("Prognoza trenutačno nije dostupna.");progressUpdate();
+      startDirectWind();
     }
   }finally{clearTimeout(timeout);if(call===refreshSequence)g("refresh").disabled=false}
 }
