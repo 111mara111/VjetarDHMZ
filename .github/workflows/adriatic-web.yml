@@ -61,10 +61,56 @@ jobs:
       - name: Generate iPhone / iPad Home Screen PNG icons
         run: python scripts/generate_apple_icons.py
       - uses: actions/configure-pages@v5
+      - name: Install Pages artifact readiness client
+        run: |
+          npm install --prefix "$RUNNER_TEMP/pages-artifact-check" --ignore-scripts --no-audit --no-fund --no-save @actions/artifact@2.1.3
       - uses: actions/upload-pages-artifact@v3
+        id: pages-upload
         with:
           path: web
+      # Use the same artifact service as deploy-pages; REST visibility alone is insufficient.
+      - name: Wait for this Pages artifact to become visible
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        timeout-minutes: 2
+        env:
+          PAGES_ARTIFACT_ID: ${{ steps.pages-upload.outputs.artifact_id }}
+        with:
+          script: |
+            const path = require('node:path');
+            const { DefaultArtifactClient } = require(path.join(
+              process.env.RUNNER_TEMP,
+              'pages-artifact-check/node_modules/@actions/artifact'
+            ));
+            const expectedId = process.env.PAGES_ARTIFACT_ID;
+            if (!/^\d+$/.test(expectedId || '')) {
+              throw new Error('Upload did not return a valid Pages artifact ID.');
+            }
+            const client = new DefaultArtifactClient();
+            const deadline = Date.now() + 60_000;
+            let attempt = 0;
+            while (true) {
+              attempt++;
+              const { artifacts } = await client.listArtifacts();
+              const matches = artifacts.filter(artifact => artifact.name === 'github-pages');
+              if (matches.length > 1) {
+                throw new Error('Multiple github-pages artifacts found; refusing ambiguous deployment.');
+              }
+              if (matches.length === 1) {
+                if (String(matches[0].id) !== expectedId) {
+                  throw new Error('Pages artifact ID differs from this upload; refusing deployment.');
+                }
+                core.info('Pages artifact ' + expectedId + ' is visible after ' + attempt + ' check(s).');
+                break;
+              }
+              const remaining = deadline - Date.now();
+              if (remaining <= 0) {
+                throw new Error('Pages artifact ' + expectedId + ' was not visible within 60 seconds.');
+              }
+              core.info('Pages artifact metadata not visible yet; checking again.');
+              await new Promise(resolve => setTimeout(resolve, Math.min(2000, remaining)));
+            }
       - uses: actions/deploy-pages@v4
+        id: deployment
       - name: Measure cold first-image transfer (direct DHMZ versus optimized preview)
         if: github.event_name != 'schedule'
         continue-on-error: true
